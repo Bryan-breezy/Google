@@ -82,6 +82,7 @@ export default function Home() {
     if (name === "businessName" && !value.trim()) return "Business name is required."
     if (name === "phone" && !value.trim()) return "Phone number is required."
     if (name === "email" && (!value.trim() || !/^\S+@\S+\.\S+$/.test(value))) return "Enter a valid email address."
+    if (name === "kraPin" && value.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(value.trim())) return "Enter a valid KRA PIN format (e.g., A123456789B)."
     if (name === "agreeCheck" && value !== "yes") return "Please confirm the agreement before submitting."
     if (name === "sigName" && !value.trim()) return "Authorized signatory name is required."
     return ""
@@ -92,8 +93,18 @@ export default function Home() {
     setErrors((current) => ({ ...current, [name]: validateField(name, value) }))
   }
 
-  const toggleDoc = (doc: string) =>
-    setSelectedDocs((current) => (current.includes(doc) ? current.filter((item) => item !== doc) : [...current, doc]))
+  const toggleDoc = (doc: string) => {
+    setSelectedDocs((current) => {
+      const updated = current.includes(doc) ? current.filter((item) => item !== doc) : [...current, doc]
+      // Clear document selection errors once changed
+      setErrors((errs) => {
+        const next = { ...errs }
+        delete next.documents
+        return next
+      })
+      return updated
+    })
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -102,12 +113,26 @@ export default function Home() {
     if (!values.businessName?.trim()) nextErrors.businessName = "Business name is required."
     if (!values.phone?.trim()) nextErrors.phone = "Phone number is required."
     if (!values.email?.trim() || !/^\S+@\S+\.\S+$/.test(values.email)) nextErrors.email = "Enter a valid email address."
+    if (values.kraPin?.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(values.kraPin.trim())) {
+      nextErrors.kraPin = "Enter a valid KRA PIN format (e.g., A123456789B)."
+    }
+    
+    // Document match validations
+    if (values.kraPin?.trim() && !selectedDocs.includes("kra")) {
+      nextErrors.documents = "Please check 'KRA PIN Certificate' to confirm you will email it."
+    } else if (values.permitNo?.trim() && !selectedDocs.includes("permit")) {
+      nextErrors.documents = "Please check 'Business Permit / Trade License' to confirm you will email it."
+    } else if (values.dirId?.trim() && !selectedDocs.includes("id")) {
+      nextErrors.documents = "Please check 'Copy of ID / Passport' to confirm you will email it."
+    }
+
     if (!values.agreeCheck) nextErrors.agreeCheck = "Please confirm the agreement before submitting."
     if (!values.sigName?.trim()) nextErrors.sigName = "Authorized signatory name is required."
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
-      document.getElementById(Object.keys(nextErrors)[0])?.scrollIntoView({ behavior: "smooth", block: "center" })
+      const firstErrorKey = Object.keys(nextErrors)[0]
+      document.getElementById(firstErrorKey === "documents" ? "section-5" : firstErrorKey)?.scrollIntoView({ behavior: "smooth", block: "center" })
       return
     }
     if (!configured) {
@@ -221,7 +246,10 @@ export default function Home() {
                 : <>set <code>GOOGLE_FORMS_URL</code> in the project root <code>.env</code> file. Entry IDs are detected automatically from the form.</>}
             </p>{!configured && <span className="status-pill">Connection pending</span>}
           </div>
-          <p className="intro-copy">Fields marked <span className="required">*</span> are required. Your information is used for account management, credit assessment, order processing, delivery, and debt recovery in accordance with the agreement below.</p>
+          <p className="intro-copy">
+            Fields marked <span className="required">*</span> are required. 
+            Your information is used for account management, credit assessment, order processing, delivery, and debt recovery in accordance with the agreement below.
+          </p>
           <form onSubmit={submit} noValidate>
             <Section id="section-1" number="01" title="Customer details" eyebrow="Your business">
               <div className="field-grid">
@@ -285,6 +313,7 @@ export default function Home() {
                   </label>
                 ))}
               </div>
+              {errors.documents && <span className="error-text" style={{ display: "block", marginTop: "0.5rem" }}>{errors.documents}</span>}
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
             <Section id="section-6" number="06" title="Agreement" eyebrow="Read, confirm, submit">

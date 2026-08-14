@@ -82,6 +82,30 @@ app.post(
         })
       }
 
+      // KRA PIN format validation
+      if (values.kraPin?.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(values.kraPin.trim())) {
+        return res.status(400).json({
+          error: "Invalid KRA PIN format. It must start with a letter, followed by 9 digits, and end with a letter.",
+        })
+      }
+
+      // Document match validation
+      if (values.kraPin?.trim() && !selectedDocs.includes("kra")) {
+        return res.status(400).json({
+          error: "Document match error: You provided a KRA PIN but did not select the KRA PIN Certificate checklist item.",
+        })
+      }
+      if (values.permitNo?.trim() && !selectedDocs.includes("permit")) {
+        return res.status(400).json({
+          error: "Document match error: You provided a Business Permit Number but did not select the Business Permit checklist item.",
+        })
+      }
+      if (values.dirId?.trim() && !selectedDocs.includes("id")) {
+        return res.status(400).json({
+          error: "Document match error: You provided a Director ID/Passport number but did not select the Copy of ID/Passport checklist item.",
+        })
+      }
+
       const formData: Record< string, string | string[]> = {
         businessName: values.businessName || "",
         kraPin: values.kraPin || "",
