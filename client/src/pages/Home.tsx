@@ -86,7 +86,7 @@ export default function Home() {
     if (name === "phone" && !value.trim()) return "Phone number is required."
     if (emailFieldNames.has(name) && value.trim() && !EMAIL_PATTERN.test(value.trim())) return "Enter a valid email address."
     if (name === "email" && !value.trim()) return "Email address is required."
-    if (name === "kraPin" && value.trim() && !KRA_PIN_PATTERN.test(value.trim())) return "Enter a valid KRA PIN format (e.g., A123456789B)."
+    if (name === "kraPin" && value.trim() && !KRA_PIN_PATTERN.test(value.trim())) return "Enter a valid KRA PIN format"
     if (name === "agreeCheck" && value !== "yes") return "Please confirm the agreement before submitting."
     if (name === "sigName" && !value.trim()) return "Authorized signatory name is required."
     if (name === "salesPersonId" && !value.trim()) return "Salesperson-in-charge ID is required for validation."
