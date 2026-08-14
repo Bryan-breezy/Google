@@ -113,7 +113,7 @@ export default function Home() {
       return
     }
     if (!configured) {
-      toast.error("Google Forms is not connected yet.", { description: "Set GOOGLE_FORMS_URL on the server" })
+      toast.error("Google Forms is not connected yet.", { description: "Set GOOGLE_FORMS_URL in the project root .env file" })
       document.getElementById("google-setup")?.scrollIntoView({ behavior: "smooth", block: "center" })
       return
     }
@@ -220,7 +220,7 @@ export default function Home() {
               <strong>{configured ? "Connected:" : "Before launch:"}</strong>
               {configured
                 ? "submissions are routed to the Sassy Customer Registration Google Form and its linked review workbook."
-                : <>set <code>GOOGLE_FORMS_URL</code> in <code>server/.env</code> and the entry IDs in <code>server/index.js</code>.</>}
+                : <>set <code>GOOGLE_FORMS_URL</code> in the project root <code>.env</code> file. Entry IDs are detected automatically from the form.</>}
             </p>{!configured && <span className="status-pill">Connection pending</span>}
           </div>
           <p className="intro-copy">Fields marked <span className="required">*</span> are required. Your information is used for account management, credit assessment, order processing, delivery, and debt recovery in accordance with the agreement below.</p>
