@@ -7,6 +7,9 @@ import Footer from "@/components/Footer"
 const sections = ["Customer details", "People & contacts", "Trade references", "Banking & terms", "Documents", "Agreement"]
 const businessTypes = ["Retail shop", "Wholesale distributor", "Beauty salon / spa", "Supermarket", "Other"]
 const paymentTerms = ["COD", "7 days", "14 days", "30 days", "45 days", "60 days"]
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
+const emailFieldNames = new Set(["email", "dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"])
 
 function Field(
   { label, name, required, type = "text", value, onChange, error, placeholder }:
@@ -81,8 +84,9 @@ export default function Home() {
   const validateField = (name: string, value: string) => {
     if (name === "businessName" && !value.trim()) return "Business name is required."
     if (name === "phone" && !value.trim()) return "Phone number is required."
-    if (name === "email" && (!value.trim() || !/^\S+@\S+\.\S+$/.test(value))) return "Enter a valid email address."
-    if (name === "kraPin" && value.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(value.trim())) return "Enter a valid KRA PIN format (e.g., A123456789B)."
+    if (emailFieldNames.has(name) && value.trim() && !EMAIL_PATTERN.test(value.trim())) return "Enter a valid email address."
+    if (name === "email" && !value.trim()) return "Email address is required."
+    if (name === "kraPin" && value.trim() && !KRA_PIN_PATTERN.test(value.trim())) return "Enter a valid KRA PIN format (e.g., A123456789B)."
     if (name === "agreeCheck" && value !== "yes") return "Please confirm the agreement before submitting."
     if (name === "sigName" && !value.trim()) return "Authorized signatory name is required."
     if (name === "salesPersonId" && !value.trim()) return "Salesperson-in-charge ID is required for validation."
@@ -113,8 +117,18 @@ export default function Home() {
     const nextErrors: Record<string, string> = {}
     if (!values.businessName?.trim()) nextErrors.businessName = "Business name is required."
     if (!values.phone?.trim()) nextErrors.phone = "Phone number is required."
-    if (!values.email?.trim() || !/^\S+@\S+\.\S+$/.test(values.email)) nextErrors.email = "Enter a valid email address."
-    if (values.kraPin?.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(values.kraPin.trim())) {
+    if (!values.email?.trim()) {
+      nextErrors.email = "Email address is required."
+    } else if (!EMAIL_PATTERN.test(values.email.trim())) {
+      nextErrors.email = "Enter a valid email address."
+    }
+    for (const emailFieldName of emailFieldNames) {
+      const emailValue = values[emailFieldName]?.trim()
+      if (emailValue && !EMAIL_PATTERN.test(emailValue)) {
+        nextErrors[emailFieldName] = "Enter a valid email address."
+      }
+    }
+    if (values.kraPin?.trim() && !KRA_PIN_PATTERN.test(values.kraPin.trim())) {
       nextErrors.kraPin = "Enter a valid KRA PIN format (e.g., A123456789B)."
     }
     
@@ -256,7 +270,7 @@ export default function Home() {
             <Section id="section-1" number="01" title="Customer details" eyebrow="Your business">
               <div className="field-grid">
                 <Field label="Business name" name="businessName" required value={values.businessName ?? ""} onChange={(value) => update("businessName", value)} error={errors.businessName} />
-                <Field label="KRA PIN" name="kraPin" value={values.kraPin ?? ""} onChange={(value) => update("kraPin", value)} />
+                <Field label="KRA PIN" name="kraPin" placeholder="e.g., A123456789B" value={values.kraPin ?? ""} onChange={(value) => update("kraPin", value.toUpperCase())} error={errors.kraPin} />
                 <Field label="Physical address" name="physicalAddress" value={values.physicalAddress ?? ""} onChange={(value) => update("physicalAddress", value)} />
                 <Field label="Phone / mobile" name="phone" required type="tel" value={values.phone ?? ""} onChange={(value) => update("phone", value)} error={errors.phone} />
                 <Field label="Email" name="email" required type="email" value={values.email ?? ""} onChange={(value) => update("email", value)} error={errors.email} />
@@ -296,7 +310,10 @@ export default function Home() {
                     <strong>0{number}</strong>
                     <input aria-label={`Referee ${number} company`} value={values[`ref${number}Company`] ?? ""} onChange={(event) => update(`ref${number}Company`, event.target.value)} />
                     <input aria-label={`Referee ${number} contact`} value={values[`ref${number}Contact`] ?? ""} onChange={(event) => update(`ref${number}Contact`, event.target.value)} />
-                    <input aria-label={`Referee ${number} email`} type="email" value={values[`ref${number}Email`] ?? ""} onChange={(event) => update(`ref${number}Email`, event.target.value)} />
+                    <div>
+                      <input aria-label={`Referee ${number} email`} type="email" value={values[`ref${number}Email`] ?? ""} onChange={(event) => update(`ref${number}Email`, event.target.value)} aria-invalid={Boolean(errors[`ref${number}Email`])} />
+                      {errors[`ref${number}Email`] && <span className="error-text">{errors[`ref${number}Email`]}</span>}
+                    </div>
                   </div>
                 ))}
               </div>

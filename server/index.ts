@@ -18,6 +18,10 @@ interface SubmitRegistrationBody {
   selectedDocs?: string[]
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
+const optionalEmailFields = ["dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"] as const
+
 const documentLabels: Record<string, string> = {
   id: "Director / owner ID",
   permit: "Business permit",
@@ -70,7 +74,7 @@ app.post(
         values.businessName?.trim() &&
           values.phone?.trim() &&
           values.email?.trim() &&
-          /^\S+@\S+\.\S+$/.test(values.email) &&
+          EMAIL_PATTERN.test(values.email.trim()) &&
           values.agreeCheck === "yes" &&
           values.sigName?.trim() &&
           values.salesPersonId?.trim()
@@ -84,10 +88,19 @@ app.post(
       }
 
       // KRA PIN format validation
-      if (values.kraPin?.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(values.kraPin.trim())) {
+      if (values.kraPin?.trim() && !KRA_PIN_PATTERN.test(values.kraPin.trim())) {
         return res.status(400).json({
           error: "Invalid KRA PIN format. It must start with a letter, followed by 9 digits, and end with a letter.",
         })
+      }
+
+      for (const fieldName of optionalEmailFields) {
+        const email = values[fieldName]?.trim()
+        if (email && !EMAIL_PATTERN.test(email)) {
+          return res.status(400).json({
+            error: `Invalid email address in ${fieldName}.`,
+          })
+        }
       }
 
       // Document match validation
