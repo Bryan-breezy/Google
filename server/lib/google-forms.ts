@@ -35,7 +35,9 @@ export type GoogleFormFieldName =
 
 export interface GoogleFormConfig { 
   responseUrl: string,  
-  entries: Partial< Record<GoogleFormFieldName, string>> 
+  entries: Partial< Record<GoogleFormFieldName, string>>,
+  fbzx?: string,
+  pageHistory?: string
 }
 
 const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
@@ -361,13 +363,46 @@ export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
     if (entryId) { entries[fieldName] = entryId }
   }
 
-  const responseUrl = formUrl.replace( /\/viewform.*$/, "/formResponse" )
+  // Find the canonical form action URL from the HTML if possible.
+  const actionMatch = html.match(/<form[^>]*action="([^"]*)"/)
+  const responseUrl = actionMatch ? actionMatch[1] : formUrl.replace( /\/viewform.*$/, "/formResponse" )
 
-  cachedConfig = { responseUrl,entries }
+  // Extract fbzx value
+  const fbzxMatch = html.match(/name="fbzx"\s+value="([^"]*)"/)
+  const fbzx = fbzxMatch ? fbzxMatch[1] : undefined
+
+  // Count page breaks to build pageHistory
+  const match = html.match(/var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s)
+  let pageCount = 1
+  if (match) {
+    try {
+      const data = JSON.parse(match[1])
+      let tempCount = 0
+      const walk = (value: unknown): void => {
+        if (!Array.isArray(value)) return
+        if (
+          value.length > 3 &&
+          typeof value[0] === "number" &&
+          typeof value[1] === "string" &&
+          value[3] === 8
+        ) {
+          tempCount++
+        }
+        value.forEach(walk)
+      }
+      walk(data)
+      pageCount = tempCount || 1
+    } catch {
+      // ignore
+    }
+  }
+  const pageHistory = Array.from({ length: pageCount }, (_, i) => i).join(",")
+
+  cachedConfig = { responseUrl, entries, fbzx, pageHistory }
 
   cacheTime = now
 
-  console.log("Google Form fields detected:",entries)
+  console.log("Google Form fields detected:", entries)
 
   return cachedConfig
 }
@@ -391,6 +426,15 @@ export async function submitToGoogleForm(data: Partial< Record< GoogleFormFieldN
     } else {
       payload.append(entryId, value ?? "")
     }
+  }
+
+  // Add required hidden parameters for Google Forms flow validation
+  payload.append("fvv", "1")
+  if (config.pageHistory) {
+    payload.append("pageHistory", config.pageHistory)
+  }
+  if (config.fbzx) {
+    payload.append("fbzx", config.fbzx)
   }
 
   const response =

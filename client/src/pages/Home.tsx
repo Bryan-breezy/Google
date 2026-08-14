@@ -69,8 +69,6 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false)
   const [reference, setReference] = useState("")
 
-  // "configured" starts null (unknown) until the server tells us — the
-  // client never has the Google Forms URL/entry IDs to check this itself.
   const [configured, setConfigured] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -151,7 +149,7 @@ export default function Home() {
           <Check size={26} />
         </div>
         <p className="kicker">Application received</p>
-        <h1>Thank you for registering with Sassy.</h1>
+        <h1>Thank you for registering with Sassy Cosmetics and Beauty Products Kenya Limited.</h1>
         <p className="success-copy">
           Your registration has been sent securely to the Sassy customer accounts team.
           We will review the details and confirm the next step for your wholesale account.
@@ -274,7 +272,7 @@ export default function Home() {
                 <Field label="Account no." name="acctNo" value={values.acctNo ?? ""} onChange={(value) => update("acctNo", value)} />
               </div>
               <ChoiceGroup label="Terms of payment requested" name="paymentTerms" options={paymentTerms} value={values.paymentTerms ?? ""} onChange={(value) => update("paymentTerms", value)} />
-              <p className="helper">Requested terms are subject to review and approval by Sassy Cosmetics.</p>
+              <p className="helper">Requested terms are subject to review and approval by Sassy Cosmetics and Beauty Products Kenya Limited.</p>
             </Section>
             <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next">
               <p className="section-copy">Confirm which supporting documents you’ll email separately after submitting this application.</p>
@@ -290,7 +288,7 @@ export default function Home() {
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
             <Section id="section-6" number="06" title="Agreement" eyebrow="Read, confirm, submit">
-              <p className="declaration">I/We declare that the information provided is true, complete and accurate to the best of my/our knowledge. I/We acknowledge that requested payment terms are subject to approval by Sassy Cosmetics and agree to be bound by the Customer Account, Supply and Credit Agreement.</p>
+              <p className="declaration">I/We declare that the information provided is true, complete and accurate to the best of my/our knowledge. I/We acknowledge that requested payment terms are subject to approval by Sassy Cosmetics and Beauty Products Kenya Limited and agree to be bound by the Customer Account, Supply and Credit Agreement.</p>
               <button type="button" className="agreement-toggle" onClick={() => setAgreementOpen((open) => !open)}>
                 {agreementOpen ? "Hide full agreement" : "Read the full Customer Account, Supply and Credit Agreement"}
                 {agreementOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
