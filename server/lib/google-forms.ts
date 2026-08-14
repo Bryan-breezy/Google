@@ -239,7 +239,7 @@ async function fetchGoogleForm( formUrl: string ): Promise<string> {
 function extractEntryIds(html: string): string[] {
   const matches = html.match(/entry\.\d+/g) ?? []
 
-  return [...new Set(matches)]
+  return Array.from(new Set(matches))
 }
 
 function findEntryId( html: string, fieldName: GoogleFormFieldName): string | undefined {
