@@ -17,6 +17,10 @@ export type GoogleFormFieldName =
   | "cpPosition"
   | "cpEmail"
   | "cpMobile"
+  | "financeName"
+  | "financePosition"
+  | "financeEmail"
+  | "financeMobile"
   | "ref1Company"
   | "ref1Contact"
   | "ref1Email"
@@ -32,6 +36,7 @@ export type GoogleFormFieldName =
   | "agreeCheck"
   | "sigName"
   | "sigDesignation"
+  | "salesPersonId"
 
 export interface GoogleFormConfig { 
   responseUrl: string,  
@@ -143,6 +148,32 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Primary contact mobile",
   ],
 
+  financeName: [
+    "Accounts / Finance Contact Name",
+    "Accounts Finance Contact Name",
+    "Accounts Contact Name",
+    "Finance Contact Name",
+  ],
+
+  financePosition: [
+    "Accounts / Finance Contact Position",
+    "Accounts Finance Contact Position",
+    "Finance Contact Position",
+  ],
+
+  financeEmail: [
+    "Accounts / Finance Contact Email",
+    "Accounts Finance Contact Email",
+    "Finance Contact Email",
+  ],
+
+  financeMobile: [
+    "Accounts / Finance Contact Mobile",
+    "Accounts Finance Contact Mobile",
+    "Finance Contact Mobile",
+    "Accounts Contact Phone",
+  ],
+
   ref1Company: [
     "Reference 1 Company",
     "Reference 1 - Company",
@@ -235,6 +266,14 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Signature Designation",
     "Signatory Designation",
     "Designation",
+  ],
+
+  salesPersonId: [
+    "Salesperson-in-charge ID",
+    "Salesperson in charge ID",
+    "Sales Person in Charge ID",
+    "Salesperson ID",
+    "Sales Rep ID",
   ],
 }
 

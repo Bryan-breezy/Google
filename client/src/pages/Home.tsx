@@ -85,6 +85,7 @@ export default function Home() {
     if (name === "kraPin" && value.trim() && !/^[A-Z]\d{9}[A-Z]$/i.test(value.trim())) return "Enter a valid KRA PIN format (e.g., A123456789B)."
     if (name === "agreeCheck" && value !== "yes") return "Please confirm the agreement before submitting."
     if (name === "sigName" && !value.trim()) return "Authorized signatory name is required."
+    if (name === "salesPersonId" && !value.trim()) return "Salesperson-in-charge ID is required for validation."
     return ""
   }
 
@@ -128,6 +129,7 @@ export default function Home() {
 
     if (!values.agreeCheck) nextErrors.agreeCheck = "Please confirm the agreement before submitting."
     if (!values.sigName?.trim()) nextErrors.sigName = "Authorized signatory name is required."
+    if (!values.salesPersonId?.trim()) nextErrors.salesPersonId = "Salesperson-in-charge ID is required for validation."
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
@@ -278,6 +280,13 @@ export default function Home() {
                 <Field label="Email address" name="cpEmail" type="email" value={values.cpEmail ?? ""} onChange={(value) => update("cpEmail", value)} />
                 <Field label="Mobile number" name="cpMobile" type="tel" value={values.cpMobile ?? ""} onChange={(value) => update("cpMobile", value)} />
               </div>
+              <div className="subsection-title spaced">Accounts / finance contact</div>
+              <div className="field-grid">
+                <Field label="Name" name="financeName" value={values.financeName ?? ""} onChange={(value) => update("financeName", value)} />
+                <Field label="Position" name="financePosition" value={values.financePosition ?? ""} onChange={(value) => update("financePosition", value)} />
+                <Field label="Email address" name="financeEmail" type="email" value={values.financeEmail ?? ""} onChange={(value) => update("financeEmail", value)} />
+                <Field label="Mobile number" name="financeMobile" type="tel" value={values.financeMobile ?? ""} onChange={(value) => update("financeMobile", value)} />
+              </div>
             </Section>
             <Section id="section-3" number="03" title="Trade references" eyebrow="Two businesses who know your work">
               <div className="reference-table">
@@ -345,6 +354,7 @@ export default function Home() {
               <div className="field-grid signature-grid">
                 <Field label="Authorized signatory name" name="sigName" required placeholder="Type full name as signature" value={values.sigName ?? ""} onChange={(value) => update("sigName", value)} error={errors.sigName} />
                 <Field label="Designation" name="sigDesignation" value={values.sigDesignation ?? ""} onChange={(value) => update("sigDesignation", value)} />
+                <Field label="Salesperson-in-charge ID" name="salesPersonId" required placeholder="Enter the salesperson ID" value={values.salesPersonId ?? ""} onChange={(value) => update("salesPersonId", value)} error={errors.salesPersonId} />
               </div>
             </Section>
             <div className="submit-panel">

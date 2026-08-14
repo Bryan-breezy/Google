@@ -72,7 +72,8 @@ app.post(
           values.email?.trim() &&
           /^\S+@\S+\.\S+$/.test(values.email) &&
           values.agreeCheck === "yes" &&
-          values.sigName?.trim()
+          values.sigName?.trim() &&
+          values.salesPersonId?.trim()
       )
 
       if (!requiredOk) {
@@ -126,6 +127,10 @@ app.post(
         cpPosition: values.cpPosition || "",
         cpEmail: values.cpEmail || "",
         cpMobile: values.cpMobile || "",
+        financeName: values.financeName || "",
+        financePosition: values.financePosition || "",
+        financeEmail: values.financeEmail || "",
+        financeMobile: values.financeMobile || "",
         ref1Company: values.ref1Company || "",
         ref1Contact: values.ref1Contact || "",
         ref1Email: values.ref1Email || "",
@@ -148,6 +153,7 @@ app.post(
             : "",
         sigName: values.sigName || "",
         sigDesignation: values.sigDesignation || "",
+        salesPersonId: values.salesPersonId || "",
       }
 
       /**
