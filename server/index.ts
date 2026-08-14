@@ -1,6 +1,10 @@
-import "dotenv/config"
+import dotenv from "dotenv"
 import express, { Request, Response } from "express"
 import cors from "cors"
+import path from "node:path"
+
+dotenv.config()
+dotenv.config({ path: path.resolve(process.cwd(), "server/.env") })
 
 import { getGoogleFormConfig, submitToGoogleForm } from "./lib/google-forms"
 
@@ -177,6 +181,14 @@ app.post(
     }
   }
 )
+
+// In production, serve the Vite build from the same process as the API.
+// In development, Vite serves the client and proxies /api to this server.
+const publicDir = path.resolve(process.cwd(), "dist/public")
+app.use(express.static(publicDir))
+app.get("*", (_req: Request, res: Response) => {
+  res.sendFile(path.join(publicDir, "index.html"))
+})
 
 const PORT =
   process.env.PORT || 8787
