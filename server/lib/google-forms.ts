@@ -75,31 +75,33 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Business type",
     "Biz Type",
     "Type of Business",
-    "bizTypeOther"
   ],
 
   bizTypeOther: [
     "Other Business Type",
     "Business Type - Other",
-    "Other",
+    "Business type — if other",
   ],
 
   dirName: [
     "Director Name",
     "Director's Name",
     "Directors Name",
+    "Director / owner full name",
   ],
 
   dirId: [
     "Director ID",
     "Director ID Number",
     "Director Identification Number",
+    "Director / owner ID or passport",
   ],
 
   dirEmail: [
     "Director Email",
     "Director's Email",
     "Director Email Address",
+    "Director / owner email",
   ],
 
   dirMobile: [
@@ -107,24 +109,28 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Director's Mobile",
     "Director Phone",
     "Director Phone Number",
+    "Director / owner mobile",
   ],
 
   cpName: [
     "Contact Person Name",
     "Contact Person",
     "CP Name",
+    "Primary contact full name",
   ],
 
   cpPosition: [
     "Contact Person Position",
     "Contact Person's Position",
     "CP Position",
+    "Primary contact position",
   ],
 
   cpEmail: [
     "Contact Person Email",
     "Contact Person's Email",
     "CP Email",
+    "Primary contact email",
   ],
 
   cpMobile: [
@@ -132,18 +138,21 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Contact Person's Mobile",
     "Contact Person Phone",
     "CP Mobile",
+    "Primary contact mobile",
   ],
 
   ref1Company: [
     "Reference 1 Company",
     "Reference 1 - Company",
     "Reference 1 Company Name",
+    "Reference 1 — company",
   ],
 
   ref1Contact: [
     "Reference 1 Contact",
     "Reference 1 - Contact",
     "Reference 1 Contact Person",
+    "Reference 1 — contact and phone",
   ],
 
   ref1Email: [
@@ -155,12 +164,14 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Reference 2 Company",
     "Reference 2 - Company",
     "Reference 2 Company Name",
+    "Reference 2 — company",
   ],
 
   ref2Contact: [
     "Reference 2 Contact",
     "Reference 2 - Contact",
     "Reference 2 Contact Person",
+    "Reference 2 — contact and phone",
   ],
 
   ref2Email: [
@@ -192,12 +203,14 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
   paymentTerms: [
     "Payment Terms",
     "Payment Term",
+    "Requested payment terms",
   ],
 
   documents: [
     "Documents",
     "Supporting Documents",
     "Required Documents",
+    "Documents available",
   ],
 
   agreeCheck: [
@@ -205,12 +218,15 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "I Agree",
     "Agree",
     "Declaration",
+    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited.",
   ],
 
   sigName: [
     "Signature Name",
     "Name of Signatory",
     "Signatory Name",
+    "Authorised signatory full name",
+    "Authorized signatory full name",
   ],
 
   sigDesignation: [
@@ -236,19 +252,78 @@ async function fetchGoogleForm( formUrl: string ): Promise<string> {
   return response.text()
 }
 
+interface FormQuestionMetadata {
+  title: string
+  entryId: string
+}
+
+function extractQuestionMetadata(html: string): FormQuestionMetadata[] {
+  const match = html.match(
+    /var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s
+  )
+
+  if (!match) return []
+
+  let data: unknown
+  try {
+    data = JSON.parse(match[1])
+  } catch {
+    return []
+  }
+
+  const questions: FormQuestionMetadata[] = []
+
+  const walk = (value: unknown): void => {
+    if (!Array.isArray(value)) return
+
+    if (
+      value.length > 4 &&
+      typeof value[0] === "number" &&
+      typeof value[1] === "string"
+    ) {
+      const itemDetails = value[4]
+      const firstAnswer =
+        Array.isArray(itemDetails) && Array.isArray(itemDetails[0])
+          ? itemDetails[0]
+          : undefined
+      const entryNumber = firstAnswer?.[0]
+
+      if (typeof entryNumber === "number") {
+        questions.push({
+          title: value[1],
+          entryId: `entry.${entryNumber}`,
+        })
+      }
+    }
+
+    value.forEach(walk)
+  }
+
+  walk(data)
+  return questions
+}
+
 function extractEntryIds(html: string): string[] {
   const matches = html.match(/entry\.\d+/g) ?? []
 
   return Array.from(new Set(matches))
 }
 
-function findEntryId( html: string, fieldName: GoogleFormFieldName): string | undefined {
+function findEntryId(html: string, fieldName: GoogleFormFieldName): string | undefined {
   const labels = FIELD_LABELS[fieldName].map(normalizeText)
-  const entryIds = extractEntryIds(html)
+  const metadata = extractQuestionMetadata(html)
 
+  for (const question of metadata) {
+    const title = normalizeText(question.title)
+    if (labels.some((label) => title === label)) {
+      return question.entryId
+    }
+  }
+
+  // Fallback for older or non-standard Forms markup.
+  const entryIds = extractEntryIds(html)
   for (const entryId of entryIds) {
     const index = html.indexOf(entryId)
-
     if (index === -1) continue
 
     const start = Math.max(0, index - 2000)
@@ -256,6 +331,7 @@ function findEntryId( html: string, fieldName: GoogleFormFieldName): string | un
     const context = normalizeText(html.substring(start, end))
     if (labels.some((label) => context.includes(label))) return entryId
   }
+
   return undefined
 }
 
