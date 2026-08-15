@@ -94,10 +94,24 @@ a { color:inherit; }
   white-space:nowrap; 
 }
 .intro-copy { margin:0 0 28px; color:var(--muted); font-size:13px; }
+.progress-panel { margin:0 0 20px; padding:16px 18px; background:#fffefa; border:1px solid var(--line); box-shadow:var(--shadow); }
+.progress-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:15px; }
+.progress-heading .kicker { display:block; margin-bottom:5px; }
+.progress-heading strong { color:var(--green); font:600 17px 'Fraunces',serif; }
+.progress-percent { color:var(--brass); font:600 13px 'IBM Plex Mono',monospace; }
+.progress-track { height:6px; margin:13px 0 14px; overflow:hidden; background:#e9ede5; border-radius:99px; }
+.progress-track span { display:block; height:100%; background:var(--green-2); border-radius:inherit; transition:width .3s var(--ease); }
+.progress-steps { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+.progress-step { display:flex; flex-direction:column; align-items:center; gap:5px; padding:0; color:var(--muted); background:none; border:0; cursor:pointer; font:600 9px/1.25 'IBM Plex Mono',monospace; text-align:center; }
+.progress-step span { display:grid; place-items:center; width:23px; height:23px; color:var(--muted); border:1px solid #cfd7c9; border-radius:50%; transition:all .18s var(--ease); }
+.progress-step:hover,.progress-step.active { color:var(--green); }
+.progress-step.complete span,.progress-step.active span { color:#fff; background:var(--green-2); border-color:var(--green-2); }
+.draft-status { margin:12px 0 0; color:var(--muted); font-size:11px; }
 .required,.field-label b,.agree-row b { color:var(--brass); }
 form { display:flex; flex-direction:column; gap:28px; }
 .ledger-card {
- scroll-margin-top:20px; overflow:hidden; background:rgba(255,254,250,.92); border:1px solid var(--line); box-shadow:var(--shadow); }
+ scroll-margin-top:20px; overflow:hidden; background:rgba(255,254,250,.92); border:1px solid var(--line); box-shadow:var(--shadow); transition:border-color .2s var(--ease),box-shadow .2s var(--ease); }
+.ledger-card:focus { outline:2px solid var(--green-2); outline-offset:3px; }
 .card-head { 
   display:flex; 
   align-items:flex-start; 
@@ -194,7 +208,7 @@ form { display:flex; flex-direction:column; gap:28px; }
 @keyframes spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.001ms!important; transition-duration:.001ms!important; scroll-behavior:auto!important; } }
 @media (max-width:850px) { .content-layout { grid-template-columns:1fr; max-width:780px; } .section-index { position:static; flex-direction:row; gap:16px; overflow:auto; padding:0 0 5px; border-bottom:1px solid var(--line); } .index-label { display:none; } .section-index a { flex:none; } }
-@media (max-width:650px) { .site-header,.title-band-inner { align-items:flex-start; flex-direction:column; padding-left:22px; padding-right:22px; } .company-meta { align-items:flex-start; text-align:left; } .title-band-inner { padding-top:35px; padding-bottom:34px; } .title-note { width:100%; } .content-layout { padding:30px 14px 60px; } .field-grid { grid-template-columns:1fr; } .card-head,.card-body,.submit-panel { padding-left:17px; padding-right:17px; } .submit-panel { align-items:flex-start; flex-direction:column; } .submit-panel .button { width:100%; } .site-footer { align-items:flex-start; flex-direction:column; padding-left:22px; padding-right:22px; } }
+@media (max-width:650px) { .progress-steps { grid-template-columns:repeat(3,1fr); row-gap:10px; } .site-header,.title-band-inner { align-items:flex-start; flex-direction:column; padding-left:22px; padding-right:22px; } .company-meta { align-items:flex-start; text-align:left; } .title-band-inner { padding-top:35px; padding-bottom:34px; } .title-note { width:100%; } .content-layout { padding:30px 14px 60px; } .field-grid { grid-template-columns:1fr; } .card-head,.card-body,.submit-panel { padding-left:17px; padding-right:17px; } .submit-panel { align-items:flex-start; flex-direction:column; } .submit-panel .button { width:100%; } .site-footer { align-items:flex-start; flex-direction:column; padding-left:22px; padding-right:22px; } }
 
 /* Botanical Ledger interaction refinement: make validation, waiting, and confirmation states feel explicit, calm, and useful. */
 .field-error input,.field-error input:focus { border-color:var(--error); box-shadow:0 0 0 3px rgba(169,71,59,.09); }

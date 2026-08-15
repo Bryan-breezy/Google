@@ -7,6 +7,7 @@ import Footer from "@/components/Footer"
 const sections = ["Customer details", "People & contacts", "Trade references", "Banking & terms", "Documents", "Agreement"]
 const businessTypes = ["Retail shop", "Wholesale distributor", "Beauty salon / spa", "Supermarket", "Other"]
 const paymentTerms = ["COD", "7 days", "14 days", "30 days", "45 days", "60 days"]
+const DRAFT_STORAGE_KEY = "sassy-customer-registration-draft"
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
 const emailFieldNames = new Set(["email", "dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"])
@@ -25,13 +26,13 @@ function sectionIdForField(fieldName: string) {
 }
 
 function Field(
-  { label, name, required, type = "text", value, onChange, error, placeholder }:
-  { label: string; name: string; required?: boolean; type?: string; value: string; onChange: (value: string) => void; error?: string; placeholder?: string }
+  { label, name, required, type = "text", value, onChange, onBlur, error, placeholder }:
+  { label: string; name: string; required?: boolean; type?: string; value: string; onChange: (value: string) => void; onBlur?: () => void; error?: string; placeholder?: string }
 ) {
   return (
       <label className={`field ${error ? "field-error" : ""}`} id={name}>
         <span className="field-label">{label}{required && <b aria-hidden="true">*</b>}</span>
-        <input name={name} type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+        <input name={name} type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={() => { onChange(value); onBlur?.() }} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
       {error && <span className="error-text" id={`${name}-error`} role="alert">{error}</span>}
     </label>
   )
@@ -85,8 +86,35 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false)
   const [reference, setReference] = useState("")
   const [submissionError, setSubmissionError] = useState("")
+  const [activeSection, setActiveSection] = useState(1)
+  const [draftReady, setDraftReady] = useState(false)
+  const [draftRestored, setDraftRestored] = useState(false)
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null)
 
   const [configured, setConfigured] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    try {
+      const savedDraft = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft) as { values?: Record<string, string>; selectedDocs?: string[]; otherBusiness?: boolean }
+        setValues(draft.values ?? {})
+        setSelectedDocs(draft.selectedDocs ?? [])
+        setOtherBusiness(Boolean(draft.otherBusiness))
+        setDraftRestored(true)
+      }
+    } catch {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+    } finally {
+      setDraftReady(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!draftReady || submitted) return
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ values, selectedDocs, otherBusiness, savedAt: new Date().toISOString() }))
+    setDraftSavedAt(new Date())
+  }, [draftReady, submitted, values, selectedDocs, otherBusiness])
 
   useEffect(() => {
     fetch("/api/config")
@@ -112,6 +140,10 @@ export default function Home() {
     setErrors((current) => ({ ...current, [name]: validateField(name, value) }))
   }
 
+  const markFieldTouched = (name: string) => {
+    setErrors((current) => ({ ...current, [name]: validateField(name, values[name] ?? "") }))
+  }
+
   const toggleDoc = (doc: string) => {
     setSelectedDocs((current) => {
       const updated = current.includes(doc) ? current.filter((item) => item !== doc) : [...current, doc]
@@ -127,9 +159,19 @@ export default function Home() {
 
   const visibleErrors = Object.entries(errors).filter(([, message]) => Boolean(message))
   const sectionHasErrors = (sectionId: string) => visibleErrors.some(([fieldName]) => sectionIdForField(fieldName) === sectionId)
+  const sectionCompletion = [
+    Boolean(values.businessName?.trim() && values.phone?.trim() && values.email?.trim() && !sectionHasErrors("section-1")),
+    Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-2" && value.trim()) && !sectionHasErrors("section-2")),
+    Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-3" && value.trim()) && !sectionHasErrors("section-3")),
+    Boolean(values.bankName?.trim() || values.bankBranch?.trim() || values.acctName?.trim() || values.acctNo?.trim() || values.paymentTerms),
+    selectedDocs.length > 0,
+    Boolean(values.agreeCheck === "yes" && values.sigName?.trim() && values.salesPersonId?.trim() && !sectionHasErrors("section-6")),
+  ]
+  const completedSectionCount = sectionCompletion.filter(Boolean).length
 
   const focusError = (fieldName: string) => {
     const sectionId = sectionIdForField(fieldName)
+    setActiveSection(Number(sectionId.replace("section-", "")))
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "center" })
     window.setTimeout(() => {
       const input = document.getElementsByName(fieldName)[0] as HTMLElement | undefined
@@ -198,6 +240,9 @@ export default function Home() {
       }
 
       const { reference: ref } = await response.json()
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+      setDraftRestored(false)
+      setDraftSavedAt(null)
       setReference(ref)
       setSubmitted(true)
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -283,7 +328,27 @@ export default function Home() {
           {sections.map((section, index) => <a key={section} href={`#section-${index + 1}`}><span>0{index + 1}</span>{section}</a>)}
         </aside>
         <div className="form-column">
-          <div className="notice" id="google-setup">
+              <div className="progress-panel" aria-label="Registration progress">
+                <div className="progress-heading">
+                  <div>
+                    <span className="kicker">Application progress</span>
+                    <strong>{completedSectionCount} of {sections.length} sections complete</strong>
+                  </div>
+                  <span className="progress-percent">{Math.round((completedSectionCount / sections.length) * 100)}%</span>
+                </div>
+                <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={sections.length} aria-valuenow={completedSectionCount}>
+                  <span style={{ width: `${(completedSectionCount / sections.length) * 100}%` }} />
+                </div>
+                <div className="progress-steps">
+                  {sections.map((section, index) => (
+                    <button type="button" className={`progress-step ${sectionCompletion[index] ? "complete" : ""} ${activeSection === index + 1 ? "active" : ""}`} key={section} onClick={() => { setActiveSection(index + 1); document.getElementById(`section-${index + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" }) }}>
+                      <span>{sectionCompletion[index] ? "✓" : index + 1}</span>{section}
+                    </button>
+                  ))}
+                </div>
+                {(draftRestored || draftSavedAt) && <p className="draft-status" role="status">{draftRestored ? "Draft restored. " : ""}{draftSavedAt ? `Saved ${draftSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.` : "Your draft is saved automatically."}</p>}
+              </div>
+              <div className="notice" id="google-setup">
             <CircleHelp size={18} />
             <p>
               <strong>{configured ? "Connected:" : "Before launch:"}</strong>
