@@ -96,7 +96,8 @@ a { color:inherit; }
 .intro-copy { margin:0 0 28px; color:var(--muted); font-size:13px; }
 .required,.field-label b,.agree-row b { color:var(--brass); }
 form { display:flex; flex-direction:column; gap:28px; }
-.ledger-card { scroll-margin-top:20px; overflow:hidden; background:rgba(255,254,250,.92); border:1px solid var(--line); box-shadow:var(--shadow); }
+.ledger-card {
+ scroll-margin-top:20px; overflow:hidden; background:rgba(255,254,250,.92); border:1px solid var(--line); box-shadow:var(--shadow); }
 .card-head { 
   display:flex; 
   align-items:flex-start; 
@@ -127,6 +128,12 @@ form { display:flex; flex-direction:column; gap:28px; }
 .field input:hover,.reference-row input:hover { border-color:#aebaa3; }
 .field input:focus,.reference-row input:focus { border-color:var(--green-2); box-shadow:0 4px 15px rgba(47,90,26,.10); transform:translateY(-1px); outline:none; }
 .field-error input { border-color:var(--error); }
+.section-error { border-color:var(--error); box-shadow:0 0 0 2px rgba(174, 71, 55, .08), var(--shadow); }
+.form-error-summary { margin:0 0 18px; padding:14px 16px; color:#7d2d21; background:#fff4f1; border:1px solid #e3b1a8; border-left:4px solid var(--error); font-size:12px; }
+.form-error-summary strong { display:block; margin-bottom:6px; }
+.form-error-summary ul { margin:0; padding-left:18px; }
+.form-error-summary li + li { margin-top:3px; }
+.form-error-summary a { color:inherit; text-decoration:underline; }
 .error-text { margin:0; color:var(--error); font-size:11px; }
 .subsection-title { margin:0 0 17px; padding-bottom:7px; color:var(--green); border-bottom:1px solid #e7e6dc; font:600 10px 'IBM Plex Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
 .subsection-title.spaced { margin-top:26px; }

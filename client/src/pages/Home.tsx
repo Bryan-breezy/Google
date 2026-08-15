@@ -10,26 +10,39 @@ const paymentTerms = ["COD", "7 days", "14 days", "30 days", "45 days", "60 days
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
 const emailFieldNames = new Set(["email", "dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"])
+const sectionByField: Record<string, string> = {
+  businessName: "section-1", kraPin: "section-1", phone: "section-1", email: "section-1",
+  dirName: "section-2", dirId: "section-2", dirEmail: "section-2", dirMobile: "section-2",
+  cpName: "section-2", cpPosition: "section-2", cpEmail: "section-2", cpMobile: "section-2",
+  financeName: "section-2", financePosition: "section-2", financeEmail: "section-2", financeMobile: "section-2",
+  ref1Company: "section-3", ref1Contact: "section-3", ref1Email: "section-3",
+  ref2Company: "section-3", ref2Contact: "section-3", ref2Email: "section-3",
+  documents: "section-5", agreeCheck: "section-6", sigName: "section-6", salesPersonId: "section-6",
+}
+
+function sectionIdForField(fieldName: string) {
+  return sectionByField[fieldName] ?? "section-1"
+}
 
 function Field(
   { label, name, required, type = "text", value, onChange, error, placeholder }:
   { label: string; name: string; required?: boolean; type?: string; value: string; onChange: (value: string) => void; error?: string; placeholder?: string }
 ) {
   return (
-    <label className={`field ${error ? "field-error" : ""}`}>
-      <span className="field-label">{label}{required && <b aria-hidden="true">*</b>}</span>
-      <input name={name} type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} />
-      {error && <span className="error-text">{error}</span>}
+      <label className={`field ${error ? "field-error" : ""}`} id={name}>
+        <span className="field-label">{label}{required && <b aria-hidden="true">*</b>}</span>
+        <input name={name} type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+      {error && <span className="error-text" id={`${name}-error`} role="alert">{error}</span>}
     </label>
   )
 }
 
 function Section(
-  { number, title, eyebrow, children, id }:
-  { number: string; title: string; eyebrow?: string; children: React.ReactNode; id: string }
+  { number, title, eyebrow, children, id, hasError }:
+  { number: string; title: string; eyebrow?: string; children: React.ReactNode; id: string; hasError?: boolean }
 ) {
   return (
-    <section className="ledger-card" id={id}>
+    <section className={`ledger-card ${hasError ? "section-error" : ""}`} id={id} tabIndex={-1}>
       <header className="card-head">
         <span className="section-number">{number}</span>
         <div>
@@ -71,6 +84,7 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [reference, setReference] = useState("")
+  const [submissionError, setSubmissionError] = useState("")
 
   const [configured, setConfigured] = useState<boolean | null>(null)
 
@@ -111,6 +125,18 @@ export default function Home() {
     })
   }
 
+  const visibleErrors = Object.entries(errors).filter(([, message]) => Boolean(message))
+  const sectionHasErrors = (sectionId: string) => visibleErrors.some(([fieldName]) => sectionIdForField(fieldName) === sectionId)
+
+  const focusError = (fieldName: string) => {
+    const sectionId = sectionIdForField(fieldName)
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "center" })
+    window.setTimeout(() => {
+      const input = document.getElementsByName(fieldName)[0] as HTMLElement | undefined
+      ;(input ?? document.getElementById(sectionId))?.focus()
+    }, 250)
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
 
@@ -148,9 +174,10 @@ export default function Home() {
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
       const firstErrorKey = Object.keys(nextErrors)[0]
-      document.getElementById(firstErrorKey === "documents" ? "section-5" : firstErrorKey)?.scrollIntoView({ behavior: "smooth", block: "center" })
+      window.setTimeout(() => focusError(firstErrorKey), 0)
       return
     }
+    setSubmissionError("")
     if (!configured) {
       toast.error("Google Forms is not connected yet.", { description: "Set GOOGLE_FORMS_URL in the project root .env file" })
       document.getElementById("google-setup")?.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -175,7 +202,10 @@ export default function Home() {
       setSubmitted(true)
       window.scrollTo({ top: 0, behavior: "smooth" })
     } catch (error) {
-      toast.error("The submission could not be sent.", { description: "Please check your connection and try again." })
+      const message = error instanceof Error ? error.message : "The submission could not be sent."
+      setSubmissionError(message)
+      toast.error("The submission could not be sent.", { description: message })
+      window.setTimeout(() => document.getElementById("form-error-summary")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0)
     } finally {
       setSubmitting(false)
     }
@@ -266,8 +296,25 @@ export default function Home() {
             Fields marked <span className="required">*</span> are required. 
             Your information is used for account management, credit assessment, order processing, delivery, and debt recovery in accordance with the agreement below.
           </p>
+          {(visibleErrors.length > 0 || submissionError) && (
+            <div className="form-error-summary" id="form-error-summary" role="alert" aria-live="polite">
+              {submissionError && <p>{submissionError}</p>}
+              {visibleErrors.length > 0 && <>
+              <strong>Please correct the following before submitting:</strong>
+              <ul>
+                {visibleErrors.map(([fieldName, message]) => (
+                  <li key={fieldName}>
+                    <a href={`#${sectionIdForField(fieldName)}`} onClick={(event) => { event.preventDefault(); focusError(fieldName) }}>
+                      {message}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              </>}
+            </div>
+          )}
           <form onSubmit={submit} noValidate>
-            <Section id="section-1" number="01" title="Customer details" eyebrow="Your business">
+            <Section id="section-1" number="01" title="Customer details" eyebrow="Your business" hasError={sectionHasErrors("section-1")}>
               <div className="field-grid">
                 <Field label="Business name" name="businessName" required value={values.businessName ?? ""} onChange={(value) => update("businessName", value)} error={errors.businessName} />
                 <Field label="KRA PIN" name="kraPin" placeholder="e.g., A123456789B" value={values.kraPin ?? ""} onChange={(value) => update("kraPin", value.toUpperCase())} error={errors.kraPin} />
@@ -279,7 +326,7 @@ export default function Home() {
               <ChoiceGroup label="Type of business" name="bizType" options={businessTypes} value={values.bizType ?? ""} onChange={(value) => { update("bizType", value); setOtherBusiness(value === "Other") }} />
               {otherBusiness && <Field label="Please specify" name="bizTypeOther" value={values.bizTypeOther ?? ""} onChange={(value) => update("bizTypeOther", value)} />}
             </Section>
-            <Section id="section-2" number="02" title="People & contacts" eyebrow="Who we should speak with">
+            <Section id="section-2" number="02" title="People & contacts" eyebrow="Who we should speak with" hasError={sectionHasErrors("section-2")}>
               <div className="subsection-title">Director / partner</div>
               <div className="field-grid">
                 <Field label="Name" name="dirName" value={values.dirName ?? ""} onChange={(value) => update("dirName", value)} />
@@ -302,7 +349,7 @@ export default function Home() {
                 <Field label="Mobile number" name="financeMobile" type="tel" value={values.financeMobile ?? ""} onChange={(value) => update("financeMobile", value)} />
               </div>
             </Section>
-            <Section id="section-3" number="03" title="Trade references" eyebrow="Two businesses who know your work">
+            <Section id="section-3" number="03" title="Trade references" eyebrow="Two businesses who know your work" hasError={sectionHasErrors("section-3")}>
               <div className="reference-table">
                 <div className="reference-head"><span>Referee</span><span>Company name</span><span>Contact person & phone</span><span>Email</span></div>
                 {[1, 2].map((number) => (
@@ -318,7 +365,7 @@ export default function Home() {
                 ))}
               </div>
             </Section>
-            <Section id="section-4" number="04" title="Banking & terms" eyebrow="Payment preferences">
+            <Section id="section-4" number="04" title="Banking & terms" eyebrow="Payment preferences" hasError={sectionHasErrors("section-4")}>
               <div className="field-grid">
                 <Field label="Bank name" name="bankName" value={values.bankName ?? ""} onChange={(value) => update("bankName", value)} />
                 <Field label="Branch" name="bankBranch" value={values.bankBranch ?? ""} onChange={(value) => update("bankBranch", value)} />
@@ -328,7 +375,7 @@ export default function Home() {
               <ChoiceGroup label="Terms of payment requested" name="paymentTerms" options={paymentTerms} value={values.paymentTerms ?? ""} onChange={(value) => update("paymentTerms", value)} />
               <p className="helper">Requested terms are subject to review and approval by Sassy Cosmetics and Beauty Products Kenya Limited.</p>
             </Section>
-            <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next">
+            <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next" hasError={sectionHasErrors("section-5")}>
               <p className="section-copy">Confirm which supporting documents you’ll email separately after submitting this application.</p>
               <div className="document-list">
                 {[["id", "Copy of ID / Passport"], ["permit", "Business Permit / Trade License"], ["kra", "KRA PIN Certificate"], ["cert", "Certificate of Incorporation", "if applicable"]].map(([id, label, note]) => (
@@ -342,7 +389,7 @@ export default function Home() {
               {errors.documents && <span className="error-text" style={{ display: "block", marginTop: "0.5rem" }}>{errors.documents}</span>}
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
-            <Section id="section-6" number="06" title="Agreement" eyebrow="Read, confirm, submit">
+            <Section id="section-6" number="06" title="Agreement" eyebrow="Read, confirm, submit" hasError={sectionHasErrors("section-6")}>
               <p className="declaration">I/We declare that the information provided is true, complete and accurate to the best of my/our knowledge. I/We acknowledge that requested payment terms are subject to approval by Sassy Cosmetics and Beauty Products Kenya Limited and agree to be bound by the Customer Account, Supply and Credit Agreement.</p>
               <button type="button" className="agreement-toggle" onClick={() => setAgreementOpen((open) => !open)}>
                 {agreementOpen ? "Hide full agreement" : "Read the full Customer Account, Supply and Credit Agreement"}
