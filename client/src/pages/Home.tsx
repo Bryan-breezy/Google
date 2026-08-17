@@ -7,10 +7,12 @@ import Footer from "@/components/Footer"
 const sections = ["Customer details", "People & contacts", "Trade references", "Banking & terms", "Documents", "Agreement"]
 const businessTypes = ["Retail shop", "Wholesale distributor", "Beauty salon / spa", "Supermarket", "Other"]
 const paymentTerms = ["COD", "7 days", "14 days", "30 days", "45 days", "60 days"]
+const emailFieldNames = new Set(["email", "dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"])
+
 const DRAFT_STORAGE_KEY = "sassy-customer-registration-draft"
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
-const emailFieldNames = new Set(["email", "dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"])
+
 const sectionByField: Record<string, string> = {
   businessName: "section-1", kraPin: "section-1", phone: "section-1", email: "section-1",
   dirName: "section-2", dirId: "section-2", dirEmail: "section-2", dirMobile: "section-2",
@@ -20,7 +22,12 @@ const sectionByField: Record<string, string> = {
   ref2Company: "section-3", ref2Contact: "section-3", ref2Email: "section-3",
   documents: "section-5", agreeCheck: "section-6", sigName: "section-6", salesPersonId: "section-6",
 }
-// This code answers the question: "Which section does this form field belong to?" — and if it doesn't know the answer, it just points you to Section 1 by default.
+// This code answers the question: 
+// "Which section does this form field belong to?" 
+// — and if it doesn't know the answer, it just points you to Section 1 by default. eg
+// email	"section-3"
+// phone	"section-3"
+// fullName	"section-1"
 function sectionIdForField(fieldName: string) {
   return sectionByField[fieldName] ?? "section-1"
 }
@@ -32,7 +39,16 @@ function Field(
   return (
       <label className={`field ${error ? "field-error" : ""}`} id={name}>
         <span className="field-label">{label}{required && <b aria-hidden="true">*</b>}</span>
-        <input name={name} type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={() => { onChange(value); onBlur?.() }} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+        <input 
+          name={name} 
+          type={type} 
+          value={value} 
+          placeholder={placeholder} 
+          onChange={(event) => onChange(event.target.value)} 
+          onBlur={() => { onChange(value); onBlur?.() }} 
+          aria-invalid={Boolean(error)} 
+          aria-describedby={error ? `${name}-error` : undefined} 
+        />
       {error && <span className="error-text" id={`${name}-error`} role="alert">{error}</span>}
     </label>
   )
@@ -93,11 +109,13 @@ export default function Home() {
 
   const [configured, setConfigured] = useState<boolean | null>(null)
 
+  // Load draft from localStorage
   useEffect(() => {
     try {
       const savedDraft = window.localStorage.getItem(DRAFT_STORAGE_KEY)
       if (savedDraft) {
         const draft = JSON.parse(savedDraft) as { values?: Record<string, string>; selectedDocs?: string[]; otherBusiness?: boolean }
+
         setValues(draft.values ?? {})
         setSelectedDocs(draft.selectedDocs ?? [])
         setOtherBusiness(Boolean(draft.otherBusiness))
@@ -110,12 +128,17 @@ export default function Home() {
     }
   }, [])
 
+  // Save draft to localStorage whenever values or selectedDocs change
   useEffect(() => {
     if (!draftReady || submitted) return
-    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ values, selectedDocs, otherBusiness, savedAt: new Date().toISOString() }))
+    window.localStorage.setItem(
+      DRAFT_STORAGE_KEY, 
+      JSON.stringify({ values, selectedDocs, otherBusiness, savedAt: new Date().toISOString() })
+    )
     setDraftSavedAt(new Date())
   }, [draftReady, submitted, values, selectedDocs, otherBusiness])
 
+  // Check if Google Forms is configured
   useEffect(() => {
     fetch("/api/config")
       .then((res) => res.json())
@@ -128,7 +151,7 @@ export default function Home() {
     if (name === "phone" && !value.trim()) return "Phone number is required."
     if (emailFieldNames.has(name) && value.trim() && !EMAIL_PATTERN.test(value.trim())) return "Enter a valid email address."
     if (name === "email" && !value.trim()) return "Email address is required."
-    if (name === "kraPin" && value.trim() && !KRA_PIN_PATTERN.test(value.trim())) return "Enter a valid KRA PIN format"
+    if (name === "kraPin" && value.trim() && !KRA_PIN_PATTERN.test(value.trim())) return "Enter a valid KRA PIN."
     if (name === "agreeCheck" && value !== "yes") return "Please confirm the agreement before submitting."
     if (name === "sigName" && !value.trim()) return "Authorized signatory name is required."
     if (name === "salesPersonId" && !value.trim()) return "Salesperson-in-charge ID is required for validation."
@@ -157,6 +180,7 @@ export default function Home() {
     })
   }
 
+  // Determine which sections have errors and how many sections are complete
   const visibleErrors = Object.entries(errors).filter(([, message]) => Boolean(message))
   const sectionHasErrors = (sectionId: string) => visibleErrors.some(([fieldName]) => sectionIdForField(fieldName) === sectionId)
   const sectionCompletion = [
@@ -169,6 +193,7 @@ export default function Home() {
   ]
   const completedSectionCount = sectionCompletion.filter(Boolean).length
 
+  // Focus on the first field of a section when an error is detected
   const focusError = (fieldName: string) => {
     const sectionId = sectionIdForField(fieldName)
     setActiveSection(Number(sectionId.replace("section-", "")))
@@ -187,7 +212,8 @@ export default function Home() {
     if (!values.phone?.trim()) nextErrors.phone = "Phone number is required."
     if (!values.email?.trim()) {
       nextErrors.email = "Email address is required."
-    } else if (!EMAIL_PATTERN.test(values.email.trim())) {
+    } 
+    else if (!EMAIL_PATTERN.test(values.email.trim())) {
       nextErrors.email = "Enter a valid email address."
     }
     for (const emailFieldName of emailFieldNames) {
@@ -197,7 +223,7 @@ export default function Home() {
       }
     }
     if (values.kraPin?.trim() && !KRA_PIN_PATTERN.test(values.kraPin.trim())) {
-      nextErrors.kraPin = "Enter a valid KRA PIN format (e.g., A123456789B)."
+      nextErrors.kraPin = "Enter a valid KRA PIN."
     }
     
     // Document match validations
@@ -261,49 +287,49 @@ export default function Home() {
       <div className="app-shell">
         <Header />
         <main className="success-wrap" aria-live="polite">
-        <div className="success-seal">
-          <Check size={26} />
-        </div>
-        <p className="kicker">Application received</p>
-        <h1>Thank you for registering with Sassy Cosmetics and Beauty Products Kenya Limited.</h1>
-        <p className="success-copy">
-          Your registration has been sent securely to the Sassy customer accounts team.
-          We will review the details and confirm the next step for your wholesale account.
-        </p>
-        <div className="reference-card">
-          <span>Application reference</span>
-          <strong>{reference}</strong>
-        </div>
-        <div className="next-steps">
-          <div className="next-steps-heading">
-            <span className="section-number">NEXT</span>
-            <h2>What happens now</h2>
+          <div className="success-seal">
+            <Check size={26} />
           </div>
-          <ol>
-            <li>
-              <span>01</span>
-              <div>
-                <strong>Send your documents</strong>
-                <p>Email the supporting documents you selected to <a href="mailto:accounts@sassycosmetics.co.ke">accounts@sassycosmetics.co.ke</a>.</p>
-              </div>
-            </li>
-            <li>
-              <span>02</span>
-              <div>
-                <strong>Keep your reference</strong>
-                <p>Include <b>{reference}</b> in the email subject so our team can match your documents to this application.</p>
-              </div>
-            </li>
-            <li>
-              <span>03</span>
-              <div>
-                <strong>Await confirmation</strong>
-                <p>Our accounts team will review your registration and confirm approved payment terms.</p>
-              </div>
-            </li>
-          </ol>
-        </div>
-        <button className="button secondary" onClick={() => window.location.reload()}>Submit another application</button>
+          <p className="kicker">Application received</p>
+          <h1>Thank you for registering with Sassy Cosmetics and Beauty Products (K) Limited.</h1>
+          <p className="success-copy">
+            Your registration has been sent securely to the Sassy customer accounts team.
+            We will review the details and confirm the next step for your wholesale account.
+          </p>
+          <div className="reference-card">
+            <span>Application reference</span>
+            <strong>{reference}</strong>
+          </div>
+          <div className="next-steps">
+            <div className="next-steps-heading">
+              <span className="section-number">NEXT</span>
+              <h2>What happens now</h2>
+            </div>
+            <ol>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Send your documents</strong>
+                  <p>Email the supporting documents you selected to <a href="mailto:accounts@sassycosmetics.co.ke">accounts@sassycosmetics.co.ke</a>.</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Keep your reference</strong>
+                  <p>Include <b>{reference}</b> in the email subject so our team can match your documents to this application.</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>Await confirmation</strong>
+                  <p>Our accounts team will review your registration and confirm approved payment terms.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+          <button className="button secondary" onClick={() => window.location.reload()}>Submit another application</button>
         </main>
         <Footer />
       </div>
@@ -325,7 +351,11 @@ export default function Home() {
       <main className="content-layout">
         <aside className="section-index" aria-label="Form sections">
           <div className="index-label">In this application</div>
-          {sections.map((section, index) => <a key={section} href={`#section-${index + 1}`}><span>0{index + 1}</span>{section}</a>)}
+          {sections.map((section, index) => 
+            <a key={section} href={`#section-${index + 1}`}>
+              <span>0{index + 1}</span>{section}
+            </a>)
+          }
         </aside>
         <div className="form-column">
               <div className="progress-panel" aria-label="Registration progress">
@@ -334,7 +364,9 @@ export default function Home() {
                     <span className="kicker">Application progress</span>
                     <strong>{completedSectionCount} of {sections.length} sections complete</strong>
                   </div>
-                  <span className="progress-percent">{Math.round((completedSectionCount / sections.length) * 100)}%</span>
+                  <span className="progress-percent">
+                    {Math.round((completedSectionCount / sections.length) * 100)}%
+                  </span>
                 </div>
                 <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={sections.length} aria-valuenow={completedSectionCount}>
                   <span style={{ width: `${(completedSectionCount / sections.length) * 100}%` }} />
@@ -346,15 +378,14 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-                {(draftRestored || draftSavedAt) && <p className="draft-status" role="status">{draftRestored ? "Draft restored. " : ""}{draftSavedAt ? `Saved ${draftSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.` : "Your draft is saved automatically."}</p>}
               </div>
               <div className="notice" id="google-setup">
             <CircleHelp size={18} />
             <p>
-              <strong>{configured ? "Connected:" : "Before launch:"}</strong>
+              <strong>{configured ? "Connected: " : "Before launch: "}</strong>
               {configured
-                ? "submissions are routed to the Sassy Customer Registration Google Form and its linked review workbook."
-                : <>set <code>GOOGLE_FORMS_URL</code> in the project root <code>.env</code> file. Entry IDs are detected automatically from the form.</>}
+                ? " Submissions are routed to Sassy Cosmetics and Beauty Products (K) Limited."
+                : <>set <code>GOOGLE_FORMS_URL</code>.</>}
             </p>{!configured && <span className="status-pill">Connection pending</span>}
           </div>
           <p className="intro-copy">
@@ -379,10 +410,11 @@ export default function Home() {
             </div>
           )}
           <form onSubmit={submit} noValidate>
+            {/* Customer Details */}
             <Section id="section-1" number="01" title="Customer details" eyebrow="Your business" hasError={sectionHasErrors("section-1")}>
               <div className="field-grid">
                 <Field label="Business name" name="businessName" required value={values.businessName ?? ""} onChange={(value) => update("businessName", value)} error={errors.businessName} />
-                <Field label="KRA PIN" name="kraPin" placeholder="e.g., A123456789B" value={values.kraPin ?? ""} onChange={(value) => update("kraPin", value.toUpperCase())} error={errors.kraPin} />
+                <Field label="KRA PIN" name="kraPin" value={values.kraPin ?? ""} onChange={(value) => update("kraPin", value.toUpperCase())} error={errors.kraPin} />
                 <Field label="Physical address" name="physicalAddress" value={values.physicalAddress ?? ""} onChange={(value) => update("physicalAddress", value)} />
                 <Field label="Phone / mobile" name="phone" required type="tel" value={values.phone ?? ""} onChange={(value) => update("phone", value)} error={errors.phone} />
                 <Field label="Email" name="email" required type="email" value={values.email ?? ""} onChange={(value) => update("email", value)} error={errors.email} />
@@ -391,6 +423,8 @@ export default function Home() {
               <ChoiceGroup label="Type of business" name="bizType" options={businessTypes} value={values.bizType ?? ""} onChange={(value) => { update("bizType", value); setOtherBusiness(value === "Other") }} />
               {otherBusiness && <Field label="Please specify" name="bizTypeOther" value={values.bizTypeOther ?? ""} onChange={(value) => update("bizTypeOther", value)} />}
             </Section>
+
+            {/* People and Contacts */}
             <Section id="section-2" number="02" title="People & contacts" eyebrow="Who we should speak with" hasError={sectionHasErrors("section-2")}>
               <div className="subsection-title">Director / partner</div>
               <div className="field-grid">
@@ -414,6 +448,8 @@ export default function Home() {
                 <Field label="Mobile number" name="financeMobile" type="tel" value={values.financeMobile ?? ""} onChange={(value) => update("financeMobile", value)} />
               </div>
             </Section>
+
+            {/* Trade references */}
             <Section id="section-3" number="03" title="Trade references" eyebrow="Two businesses who know your work" hasError={sectionHasErrors("section-3")}>
               <div className="reference-table">
                 <div className="reference-head"><span>Referee</span><span>Company name</span><span>Contact person & phone</span><span>Email</span></div>
@@ -430,6 +466,8 @@ export default function Home() {
                 ))}
               </div>
             </Section>
+
+            {/* Banking and Terms */}
             <Section id="section-4" number="04" title="Banking & terms" eyebrow="Payment preferences" hasError={sectionHasErrors("section-4")}>
               <div className="field-grid">
                 <Field label="Bank name" name="bankName" value={values.bankName ?? ""} onChange={(value) => update("bankName", value)} />
@@ -438,8 +476,10 @@ export default function Home() {
                 <Field label="Account no." name="acctNo" value={values.acctNo ?? ""} onChange={(value) => update("acctNo", value)} />
               </div>
               <ChoiceGroup label="Terms of payment requested" name="paymentTerms" options={paymentTerms} value={values.paymentTerms ?? ""} onChange={(value) => update("paymentTerms", value)} />
-              <p className="helper">Requested terms are subject to review and approval by Sassy Cosmetics and Beauty Products Kenya Limited.</p>
+              <p className="helper">Requested terms are subject to review and approval by Sassy Cosmetics and Beauty Products (K) Limited.</p>
             </Section>
+
+            {/* Documents */}
             <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next" hasError={sectionHasErrors("section-5")}>
               <p className="section-copy">Confirm which supporting documents you’ll email separately after submitting this application.</p>
               <div className="document-list">
@@ -454,28 +494,205 @@ export default function Home() {
               {errors.documents && <span className="error-text" style={{ display: "block", marginTop: "0.5rem" }}>{errors.documents}</span>}
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
+
+            {/* Agreement */}
             <Section id="section-6" number="06" title="Agreement" eyebrow="Read, confirm, submit" hasError={sectionHasErrors("section-6")}>
-              <p className="declaration">I/We declare that the information provided is true, complete and accurate to the best of my/our knowledge. I/We acknowledge that requested payment terms are subject to approval by Sassy Cosmetics and Beauty Products Kenya Limited and agree to be bound by the Customer Account, Supply and Credit Agreement.</p>
+              <p className="declaration">
+                <ol>
+                  I/We hereby declare that the information provided in this Form is true, complete and accurate to the best of my/our knowledge. 
+                  I/We further acknowledge that any payment terms requested herein are subject to the approval of Sassy Cosmetics and Beauty Products 
+                  (K) Ltd and agree to be bound by the Company's Customer Account, Supply and Credit Agreement and all applicable terms and 
+                  conditions of trade.
+                </ol>
+                <ol>
+                  By signing this Form, I/We consent to the collection, storage, processing and use of the information provided herein by Sassy 
+                  Cosmetics and Beauty Products (K) Ltd for lawful business purposes, including account management, credit assessment, order 
+                  processing, delivery, debt recovery and related business operations. 
+                </ol>
+              </p>
               <button type="button" className="agreement-toggle" onClick={() => setAgreementOpen((open) => !open)}>
                 {agreementOpen ? "Hide full agreement" : "Read the full Customer Account, Supply and Credit Agreement"}
                 {agreementOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
-              {agreementOpen && (
-                <div className="agreement-box">
-                  <h3>Customer Account, Supply and Credit Agreement</h3>
-                  <ol>
-                    <li>The Company may sell and supply cosmetics, beauty products, personal care products, accessories, and related products offered from time to time.</li>
-                    <li>The Customer shall keep business information accurate and promptly report changes to ownership, management, address, contacts, or banking details.</li>
-                    <li>All orders are subject to acceptance by the Company and stock availability.</li>
-                    <li>Prices are the Company’s prevailing prices at the date of invoicing and may change due to costs, taxation, exchange rates, transport, or market conditions.</li>
-                    <li>Credit facilities are at the Company’s discretion and may be approved, reviewed, reduced, suspended, or withdrawn.</li>
-                    <li>The Customer shall pay according to the terms approved by the Company. Overdue accounts may result in suspended deliveries, withdrawn credit, and recovery costs.</li>
-                    <li>Risk passes to the Customer on delivery; ownership remains with the Company until full payment is received.</li>
-                    <li>The Customer must inspect deliveries and report shortages, damage, or discrepancies in writing within 24 hours.</li>
-                    <li>This Agreement is governed by the laws of Kenya. Disputes are first addressed through good-faith negotiation and then by courts of competent jurisdiction in Kenya.</li>
-                  </ol>
-                </div>
-              )}
+                {agreementOpen && (
+                  <div className="agreement-box">
+                    <h3>Customer Account, Supply and Credit Agreement</h3>
+                    <p>
+                      This Customer Account, Supply and Credit Agreement ("Agreement") is made and entered into between
+                      Sassy Cosmetics and Beauty Products (K) Ltd, a company duly incorporated under the laws of the
+                      Republic of Kenya (hereinafter referred to as "the Company"), and the Customer whose details appear
+                      in the duly completed Customer Registration Form (hereinafter referred to as "the Customer"), whereby
+                      the Company is engaged in the manufacture, distribution, marketing and sale of cosmetics, beauty
+                      products, personal care products and related merchandise, and the Customer wishes to purchase such
+                      products and, where applicable, obtain credit facilities from the Company, and accordingly the parties
+                      agree to be bound by the terms and conditions set out in this Agreement.
+                    </p>
+
+                    <h4>Appointment and Scope of Agreement</h4>
+                    <ol>
+                      <li>Subject to the terms and conditions of this Agreement, the Company agrees to sell and supply to the Customer, and the Customer agrees to purchase from the Company, such cosmetics, beauty products, personal care products, accessories and related products as may be offered by the Company from time to time.</li>
+                      <li>This Agreement shall govern all transactions, orders, deliveries, invoices, payments, credit facilities and all other commercial dealings between the parties unless otherwise agreed in writing.</li>
+                      <li>The Company reserves the right to introduce, modify, discontinue, substitute or withdraw any product, product range, packaging specification or promotional programme at any time without incurring any liability to the Customer.</li>
+                      <li>Nothing in this Agreement shall be construed as creating an exclusive purchasing or supply arrangement between the parties unless expressly agreed in writing.</li>
+                    </ol>
+
+                    <h4>Customer Account</h4>
+                    <ol>
+                      <li>The Customer shall maintain accurate, complete and up-to-date business information at all times and shall promptly notify the Company in writing of any change in its ownership, management, business name, physical address, postal address, telephone contacts, email addresses, banking details or any other material information relevant to this Agreement.</li>
+                      <li>The Company reserves the right to verify any information provided by the Customer and may suspend, delay or decline any transaction where such information is found to be inaccurate, incomplete or misleading.</li>
+                      <li>The Customer acknowledges and agrees that the Customer Registration Form and all information contained therein form an integral part of this Agreement.</li>
+                    </ol>
+
+                    <h4>Orders</h4>
+                    <ol>
+                      <li>Orders may be placed through authorized sales representatives, approved electronic channels, official Company email addresses, telephone communication, written purchase orders or any other method approved by the Company.</li>
+                      <li>All orders shall be subject to acceptance by the Company and availability of stock.</li>
+                      <li>The Company reserves the right, at its sole discretion, to reject, amend, defer, split, suspend or cancel any order where circumstances so require, including but not limited to stock shortages, overdue accounts, exceeded credit limits or operational constraints.</li>
+                      <li>No order shall be deemed accepted until the Company issues an invoice, delivery note, order confirmation or proceeds with delivery.</li>
+                    </ol>
+
+                    <h4>Pricing</h4>
+                    <ol>
+                      <li>All products shall be supplied at the Company's prevailing prices at the date of invoicing.</li>
+                      <li>The Company reserves the right to revise prices at any time due to changes in manufacturing costs, taxation, exchange rates, transportation costs, regulatory requirements or prevailing market conditions.</li>
+                      <li>All promotional prices, discounts, rebates and incentives shall be governed by separate terms communicated by the Company and may be amended or withdrawn without prior notice.</li>
+                      <li>No verbal commitment relating to pricing, discounts or incentives shall be binding unless confirmed in writing by an authorized officer of the Company.</li>
+                    </ol>
+
+                    <h4>Credit Facilities</h4>
+                    <ol>
+                      <li>The granting of credit facilities shall be entirely at the discretion of the Company, and the Company may, at its sole discretion, approve, reject, review, reduce, suspend or withdraw any credit facility at any time without prior notice.</li>
+                      <li>The Customer shall strictly adhere to the approved credit limit and credit period communicated by the Company.</li>
+                      <li>The Company may, as a condition for granting or maintaining any credit facility, require guarantees, security, post-dated cheques or any other form of credit support as it may deem appropriate.</li>
+                      <li>Any payment terms, credit period or credit limit requested by the Customer in the Customer Registration Form shall be subject to the Company's review and approval and shall not be binding upon the Company unless expressly approved in writing.</li>
+                    </ol>
+
+                    <h4>Payment Terms</h4>
+                    <ol>
+                      <li>The Customer shall make payment in accordance with the payment terms approved by the Company and specified in the Customer Registration Form, provided that customers operating on cash terms shall make full payment before delivery unless otherwise approved in writing by the Company.</li>
+                      <li>All payments shall be made strictly to the Company's official bank account, M-Pesa Paybill or M-Pesa till Number as designated by the Company, and no payments shall be made to any sales representative, employee or any other third party under any circumstances.</li>
+                      <li>Payment shall only be deemed received upon clearance and confirmation by the Company's Finance Department.</li>
+                      <li>The Customer shall not withhold payment on account of any dispute, counterclaim or set-off unless expressly agreed in writing by the Company.</li>
+                      <li>Any cheque returned unpaid shall attract all associated bank charges and administrative costs, which shall be borne by the Customer.</li>
+                    </ol>
+
+                    <h4>Overdue Accounts and Debt Recovery</h4>
+                    <ol>
+                      <li>Any amount remaining unpaid after the approved payment period shall be deemed overdue.</li>
+                      <li>The Company reserves the right to charge interest on overdue amounts at the prevailing commercial rate determined by the Company from time to time.</li>
+                      <li>The Company may suspend deliveries, withdraw credit facilities, place the Customer's account on hold or terminate the business relationship in respect of overdue accounts.</li>
+                      <li>The Customer shall be liable for all costs incurred by the Company in recovering outstanding amounts, including legal fees, court costs, debt collection charges, auctioneer fees and related administrative expenses.</li>
+                    </ol>
+
+                    <h4>Delivery and Acceptance</h4>
+                    <ol>
+                      <li>Delivery dates provided by the Company are estimates only and shall not constitute a guarantee.</li>
+                      <li>Delivery shall be deemed complete upon receipt and acknowledgment by the Customer or the Customer's authorized representative, 
+                        and a signed delivery note shall constitute conclusive evidence of delivery of the products in the quantities and condition stated therein.</li>
+                      <li>The Customer shall inspect the products immediately upon delivery and notify the Company in writing of any shortages, damages or discrepancies within twenty-four (24) hours.</li>
+                      <li>Failure to provide written notification within the prescribed period shall constitute acceptance of the products in good order and condition.</li>
+                    </ol>
+
+                    <h4>Transfer of Risk and Retention of Title</h4>
+                    <ol>
+                      <li>
+                        Risk in the products shall pass to the Customer upon delivery; however, ownership of the products
+                        shall remain vested in the Company until full payment has been received, and where any payment
+                        remains outstanding, the Company shall be entitled to repossess the products without prejudice to any
+                        other rights or remedies available under this Agreement or applicable law.
+                      </li>
+                    </ol>
+
+                    <h4>Storage, Handling and Stock Management</h4>
+                    <ol>
+                      <li>The Customer shall store products in appropriate conditions, protect them from damage, contamination,
+                      excessive heat and moisture, maintain proper stock records, implement First-In-First-Out (FIFO) stock
+                      rotation practices and monitor expiry dates regularly. 
+                      </li>
+                      <li>The Company shall not be liable for losses arising from improper storage, handling or stock management after delivery.</li>
+                    </ol>
+
+                    <h4>Returns and Claims</h4>
+                    <ol>
+                      <li>Returns shall only be accepted with the Company's prior written approval and where products were
+                      supplied in error, delivered damaged or proven to contain manufacturing defects.</li> 
+                      <li>The Company shall not accept returns of expired products, opened products, used products, slow-moving stock or products
+                      damaged after delivery.</li>
+                    </ol>
+
+                    <h4>Product Recalls</h4>
+                    <ol>
+                      <li>The Customer shall cooperate fully with any product recall initiated by the Company or a regulatory
+                      authority and shall immediately cease sale of affected products, isolate stock and provide relevant
+                      records when requested.</li>
+                    </ol>
+
+                    <h4>Intellectual Property and Brand Protection</h4>
+                    <ol>
+                      <li>All trademarks, trade names, logos, packaging designs, artwork, labels, promotional materials and
+                      intellectual property rights relating to the Company's products shall remain the exclusive property of
+                      the Company.</li> 
+                      <li>The Customer shall not copy, alter, misuse or reproduce any such intellectual property
+                      without prior written authorization.</li>
+                    </ol>
+
+                    <h4>Confidentiality</h4>
+                    <ol>
+                      <li>The Customer shall keep confidential all information relating to pricing structures, discounts,
+                      promotional programmes, customer information, trade terms, business operations and commercial
+                      arrangements obtained during the course of the business relationship.</li>
+                    </ol>
+
+                    <h4>Compliance With Laws</h4>
+                    <ol>
+                      <li>The Customer shall comply with all applicable laws, regulations and industry standards relating to the
+                      storage, marketing, sale and distribution of products supplied by the Company.</li>
+                    </ol>
+
+                    <h4>Limitation of Liability</h4>
+                    <ol>
+                      <li>The Company's liability shall be limited to replacement of defective products or refund of the
+                      purchase price at the Company's discretion.</li>
+                      <li>Under no circumstances shall the Company be liable for indirect, consequential or special losses, including loss of profits, business opportunities or goodwill.</li>
+                    </ol>
+
+                    <h4>Force Majeure</h4>
+                    <ol>
+                      <li>The Company shall not be liable for any failure or delay in performance arising from acts of God or
+                      other events beyond its reasonable control, and may suspend, reduce or cancel any affected orders
+                      without liability; however, any goods delivered or invoiced to the Customer prior to such event shall
+                      remain payable in full.</li>
+                    </ol>
+
+                    <h4>Termination</h4>
+                    <ol>
+                      <li>The Company may suspend or terminate this Agreement immediately where the Customer breaches this
+                      Agreement, fails to meet payment obligations, provides false information, becomes insolvent or engages
+                      in conduct that may expose the Company to legal, financial or reputational risk.</li>
+                    </ol>
+
+                    <h4>Dispute Resolution</h4>
+                    <ol>
+                      <li>This Agreement shall be governed by the laws of the Republic of Kenya.</li>
+                      <li>The parties shall endeavor to resolve disputes amicably through good faith negotiations.</li>
+                      <li>Where a dispute cannot be resolved amicably, it shall be referred to the courts of competent jurisdiction in Kenya.</li>
+                    </ol>
+
+                    <h4>Entire Agreement</h4>
+                    <ol>
+                      <li>This Agreement, together with the Customer Registration Form, approved credit facility documents,
+                      invoices, delivery notes and any written amendments issued by the Company, constitutes the entire
+                      agreement between the parties and supersedes all prior discussions, understandings or representations.
+                      </li>
+                    </ol>
+
+                    <p>
+                      This Agreement is executed in duplicate, with each party retaining one original copy. By signing this
+                      Agreement, the parties acknowledge that they have read, understood and agreed to be bound by its terms
+                      and conditions.
+                    </p>
+                  </div>
+                )}
               <label className={`agree-row ${errors.agreeCheck ? "field-error" : ""}`} id="agreeCheck">
                 <input type="checkbox" checked={values.agreeCheck === "yes"} onChange={(event) => update("agreeCheck", event.target.checked ? "yes" : "")} />
                 <span>I have read and agree to be bound by the Customer Account, Supply and Credit Agreement, and confirm the information provided is true and complete.<b>*</b>{errors.agreeCheck && <small className="error-text">{errors.agreeCheck}</small>}</span>
@@ -489,7 +706,7 @@ export default function Home() {
             <div className="submit-panel">
               <div>
                 <p className="kicker">Ready when you are</p>
-                <h2>Send your application to Sassy.</h2>
+                <h2>Send your application to Sassy Cosmetic & Beauty Products (K) Limited.</h2>
                 <p>Submitting this form acts as your electronic signature on the registration and credit agreement.</p>
               </div>
               <button className="button primary" type="submit" disabled={submitting} aria-busy={submitting}>

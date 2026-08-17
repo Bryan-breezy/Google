@@ -63,8 +63,7 @@ app.post(
 
       if (!configured) {
         return res.status(503).json({
-          error:
-            "Google Forms is not connected on the server.",
+          error: "Google Forms is not connected on the server.",
         })
       }
 
@@ -82,8 +81,7 @@ app.post(
 
       if (!requiredOk) {
         return res.status(400).json({
-          error:
-            "Missing or invalid required fields.",
+          error: "Missing or invalid required fields.",
         })
       }
 
@@ -180,47 +178,37 @@ app.post(
        *        ↓
        * Google Forms
        */
-      const result =
-        await submitToGoogleForm(formData)
+      const result = await submitToGoogleForm(formData)
 
       if (!result.success) {
         return res.status(502).json({
-          error:
-            "Google Forms rejected the submission.",
+          error: "Google Forms rejected the submission.",
         })
       }
 
       /**
-       * Generate your own application reference.
+       * Generate application reference.
        */
       const cleanBusinessName = (values.businessName || "")
-  .replace(/[^a-zA-Z0-9]/g, "")
-  .toUpperCase()
-
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase()
+          
     const cleanKraPin = (values.kraPin || "")
       .replace(/[^a-zA-Z0-9]/g, "")
       .toUpperCase()
 
-    const cleanMobile = (values.phone || "")
-      .replace(/\D/g, "")
+    const cleanMobile = (values.phone || "").replace(/\D/g, "")
 
-    const reference =
-      `SASSY-${new Date().getFullYear()}-${cleanKraPin}-${cleanBusinessName}-${cleanMobile}`
+    const reference = `SASSY-${new Date().getFullYear()}-${cleanKraPin}-${cleanBusinessName}-${cleanMobile}`
 
-      return res.json({
-        success: true,
-        reference,
-      })
+      return res.json({ success: true, reference,})
     } catch (error) {
       console.error(
         "Google Forms submission failed:",
         error
       )
 
-      return res.status(502).json({
-        error:
-          "Could not reach Google Forms.",
-      })
+      return res.status(502).json({error: "Could not reach Google Forms.",})
     }
   }
 )
@@ -233,11 +221,8 @@ app.get("*", (_req: Request, res: Response) => {
   res.sendFile(path.join(publicDir, "index.html"))
 })
 
-const PORT =
-  process.env.PORT || 8787
+const PORT = process.env.PORT || 8787
 
 app.listen(PORT, () => {
-  console.log(
-    `Registration API server running on http://localhost:${PORT}`
-  )
+  console.log(`Registration API server running on http://localhost:${PORT}`)
 })

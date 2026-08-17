@@ -46,212 +46,54 @@ export interface GoogleFormConfig {
 }
 
 const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
-  businessName: [
-    "Business Name",
-    "Business name",
-  ],
+  businessName: ["Business Name", "Business name"],
+  kraPin: ["KRA PIN", "KRA Pin", "KRA PIN Number"],
+  physicalAddress: ["Physical Address", "Physical address"],
+  phone: ["Phone / mobile", "Phone Number"],
+  email: ["Email", "Email Address"],
+  permitNo: ["Business permit number", "Business Permit No", "Business Permit Number"],
 
-  kraPin: [
-    "KRA PIN",
-    "KRA Pin",
-    "KRA PIN Number",
-  ],
+  bizType: ["Business type", "Biz Type", "Type of Business"],
+  bizTypeOther: [ "Other Business Type", "Business Type - Other", "Business type — if other"],
 
-  physicalAddress: [
-    "Physical Address",
-    "Physical address",
-  ],
+  dirName: [ "Director Name", "Director's Name", "Directors Name", "Director / owner full name"],
+  dirId: [ "Director ID", "Director ID Number", "Director Identification Number", "Director / owner ID or passport"],
+  dirEmail: [ "Director Email", "Director's Email", "Director Email Address", "Director / owner email"],
+  dirMobile: [ "Director Mobile", "Director's Mobile", "Director Phone", "Director Phone Number", "Director / owner mobile"],
 
-  phone: [
-    "Phone / mobile",
-    "Phone Number",
-  ],
+  cpName: [ "Contact Person Name", "Contact Person", "CP Name", "Primary contact full name"],
+  cpPosition: [ "Contact Person Position", "Contact Person's Position", "CP Position", "Primary contact position"],
+  cpEmail: [ "Contact Person Email", "Contact Person's Email", "CP Email", "Primary contact email"],
+  cpMobile: [ "Contact Person Mobile", "Contact Person's Mobile", "Contact Person Phone", "CP Mobile", "Primary contact mobile"],
 
-  email: [
-    "Email",
-    "Email Address",
-  ],
+  financeName: [ "Accounts / Finance Contact Name", "Accounts Finance Contact Name", "Accounts Contact Name", "Finance Contact Name"],
+  financePosition: [ "Accounts / Finance Contact Position", "Accounts Finance Contact Position", "Finance Contact Position"],
+  financeEmail: [ "Accounts / Finance Contact Email", "Accounts Finance Contact Email", "Finance Contact Email"],
+  financeMobile: [ "Accounts / Finance Contact Mobile", "Accounts Finance Contact Mobile", "Finance Contact Mobile", "Accounts Contact Phone"],
 
-  permitNo: [
-    "Business permit number",
-    "Business Permit No",
-    "Business Permit Number",
-  ],
+  ref1Company: [ "Reference 1 Company", "Reference 1 - Company", "Reference 1 Company Name", "Reference 1 — company"],
+  ref1Contact: [ "Reference 1 Contact", "Reference 1 - Contact", "Reference 1 Contact Person", "Reference 1 — contact and phone"],
+  ref1Email: ["Reference 1 Email", "Reference 1 - Email"],
+  ref2Company: [ "Reference 2 Company", "Reference 2 - Company", "Reference 2 Company Name", "Reference 2 — company"],
+  ref2Contact: [ "Reference 2 Contact", "Reference 2 - Contact", "Reference 2 Contact Person", "Reference 2 — contact and phone"],
+  ref2Email: [ "Reference 2 Email", "Reference 2 - Email"],
 
-  bizType: [
-    "Business type",
-    "Biz Type",
-    "Type of Business",
-  ],
+  bankName: [ "Bank Name", "Bank" ],
+  bankBranch: ["Bank Branch", "Branch"],
 
-  bizTypeOther: [
-    "Other Business Type",
-    "Business Type - Other",
-    "Business type — if other",
-  ],
+  acctName: [ "Account Name", "Bank Account Name"],
+  acctNo: [ "Account Number", "Account No", "Bank Account Number"],
 
-  dirName: [
-    "Director Name",
-    "Director's Name",
-    "Directors Name",
-    "Director / owner full name",
-  ],
+  paymentTerms: [ "Payment Terms", "Payment Term", "Requested payment terms"],
 
-  dirId: [
-    "Director ID",
-    "Director ID Number",
-    "Director Identification Number",
-    "Director / owner ID or passport",
-  ],
-
-  dirEmail: [
-    "Director Email",
-    "Director's Email",
-    "Director Email Address",
-    "Director / owner email",
-  ],
-
-  dirMobile: [
-    "Director Mobile",
-    "Director's Mobile",
-    "Director Phone",
-    "Director Phone Number",
-    "Director / owner mobile",
-  ],
-
-  cpName: [
-    "Contact Person Name",
-    "Contact Person",
-    "CP Name",
-    "Primary contact full name",
-  ],
-
-  cpPosition: [
-    "Contact Person Position",
-    "Contact Person's Position",
-    "CP Position",
-    "Primary contact position",
-  ],
-
-  cpEmail: [
-    "Contact Person Email",
-    "Contact Person's Email",
-    "CP Email",
-    "Primary contact email",
-  ],
-
-  cpMobile: [
-    "Contact Person Mobile",
-    "Contact Person's Mobile",
-    "Contact Person Phone",
-    "CP Mobile",
-    "Primary contact mobile",
-  ],
-
-  financeName: [
-    "Accounts / Finance Contact Name",
-    "Accounts Finance Contact Name",
-    "Accounts Contact Name",
-    "Finance Contact Name",
-  ],
-
-  financePosition: [
-    "Accounts / Finance Contact Position",
-    "Accounts Finance Contact Position",
-    "Finance Contact Position",
-  ],
-
-  financeEmail: [
-    "Accounts / Finance Contact Email",
-    "Accounts Finance Contact Email",
-    "Finance Contact Email",
-  ],
-
-  financeMobile: [
-    "Accounts / Finance Contact Mobile",
-    "Accounts Finance Contact Mobile",
-    "Finance Contact Mobile",
-    "Accounts Contact Phone",
-  ],
-
-  ref1Company: [
-    "Reference 1 Company",
-    "Reference 1 - Company",
-    "Reference 1 Company Name",
-    "Reference 1 — company",
-  ],
-
-  ref1Contact: [
-    "Reference 1 Contact",
-    "Reference 1 - Contact",
-    "Reference 1 Contact Person",
-    "Reference 1 — contact and phone",
-  ],
-
-  ref1Email: [
-    "Reference 1 Email",
-    "Reference 1 - Email",
-  ],
-
-  ref2Company: [
-    "Reference 2 Company",
-    "Reference 2 - Company",
-    "Reference 2 Company Name",
-    "Reference 2 — company",
-  ],
-
-  ref2Contact: [
-    "Reference 2 Contact",
-    "Reference 2 - Contact",
-    "Reference 2 Contact Person",
-    "Reference 2 — contact and phone",
-  ],
-
-  ref2Email: [
-    "Reference 2 Email",
-    "Reference 2 - Email",
-  ],
-
-  bankName: [
-    "Bank Name",
-    "Bank",
-  ],
-
-  bankBranch: [
-    "Bank Branch",
-    "Branch",
-  ],
-
-  acctName: [
-    "Account Name",
-    "Bank Account Name",
-  ],
-
-  acctNo: [
-    "Account Number",
-    "Account No",
-    "Bank Account Number",
-  ],
-
-  paymentTerms: [
-    "Payment Terms",
-    "Payment Term",
-    "Requested payment terms",
-  ],
-
-  documents: [
-    "Documents",
-    "Supporting Documents",
-    "Required Documents",
-    "Documents available",
-  ],
+  documents: [ "Documents", "Supporting Documents", "Required Documents", "Documents available"],
 
   agreeCheck: [
     "Agreement",
     "I Agree",
     "Agree",
     "Declaration",
-    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited.",
+    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited."
   ],
 
   sigName: [
@@ -295,22 +137,19 @@ async function fetchGoogleForm( formUrl: string ): Promise<string> {
 
 interface FormQuestionMetadata {
   title: string
-  entryId: string
+  entryId: string 
 }
 
+// Dig through a Google Form's hidden data, 
+// finds all the questions, 
+// and pulls out their titles and ID numbers.
 function extractQuestionMetadata(html: string): FormQuestionMetadata[] {
-  const match = html.match(
-    /var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s
-  )
-
+  const match = html.match(/var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s)
   if (!match) return []
 
   let data: unknown
-  try {
-    data = JSON.parse(match[1])
-  } catch {
-    return []
-  }
+  try { data = JSON.parse(match[1]) } 
+  catch { return [] }
 
   const questions: FormQuestionMetadata[] = []
 
@@ -323,8 +162,7 @@ function extractQuestionMetadata(html: string): FormQuestionMetadata[] {
       typeof value[1] === "string"
     ) {
       const itemDetails = value[4]
-      const firstAnswer =
-        Array.isArray(itemDetails) && Array.isArray(itemDetails[0])
+      const firstAnswer = Array.isArray(itemDetails) && Array.isArray(itemDetails[0])
           ? itemDetails[0]
           : undefined
       const entryNumber = firstAnswer?.[0]
@@ -386,8 +224,8 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
   const formUrl = process.env.GOOGLE_FORMS_URL
-
   if (!formUrl) throw new Error("GOOGLE_FORMS_URL is missing.")
+    
   const now = Date.now()
 
   if (cachedConfig && now - cacheTime < CACHE_DURATION) return cachedConfig
