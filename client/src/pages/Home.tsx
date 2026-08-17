@@ -20,7 +20,7 @@ const sectionByField: Record<string, string> = {
   ref2Company: "section-3", ref2Contact: "section-3", ref2Email: "section-3",
   documents: "section-5", agreeCheck: "section-6", sigName: "section-6", salesPersonId: "section-6",
 }
-
+// This code answers the question: "Which section does this form field belong to?" — and if it doesn't know the answer, it just points you to Section 1 by default.
 function sectionIdForField(fieldName: string) {
   return sectionByField[fieldName] ?? "section-1"
 }
