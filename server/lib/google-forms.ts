@@ -1,6 +1,7 @@
 import "dotenv/config"
 
 export type GoogleFormFieldName =
+  | "referenceNumber"
   | "businessName"
   | "kraPin"
   | "physicalAddress"
@@ -46,6 +47,13 @@ export interface GoogleFormConfig {
 }
 
 const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
+  referenceNumber: [
+    "Reference Number",
+    "Application Reference",
+    "Application reference number",
+    "Reference",
+  ],
+
   businessName: [
     "Business Name",
     "Business name",
@@ -251,6 +259,7 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "I Agree",
     "Agree",
     "Declaration",
+    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited",
     "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited.",
   ],
 
@@ -266,6 +275,7 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Signature Designation",
     "Signatory Designation",
     "Designation",
+    "Designation ",
   ],
 
   salesPersonId: [
