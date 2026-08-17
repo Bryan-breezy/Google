@@ -25,7 +25,7 @@ html { scroll-behavior:smooth; }
 body { 
   margin:0; 
   color:var(--ink); 
-  background:var(--paper) url('/manus-storage/sassy-paper-texture_f4a6b99c.jpg') center/720px auto; 
+  background:var(--paper);
   font-family:'IBM Plex Sans',sans-serif; 
   line-height:1.55; 
 }
