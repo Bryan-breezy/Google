@@ -1,6 +1,7 @@
 import "dotenv/config"
 
 export type GoogleFormFieldName =
+  | "referenceNumber"
   | "businessName"
   | "kraPin"
   | "physicalAddress"
@@ -46,12 +47,26 @@ export interface GoogleFormConfig {
 }
 
 const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
+<<<<<<< HEAD
   businessName: ["Business Name", "Business name"],
   kraPin: ["KRA PIN", "KRA Pin", "KRA PIN Number"],
   physicalAddress: ["Physical Address", "Physical address"],
   phone: ["Phone / mobile", "Phone Number"],
   email: ["Email", "Email Address"],
   permitNo: ["Business permit number", "Business Permit No", "Business Permit Number"],
+=======
+  referenceNumber: [
+    "Reference Number",
+    "Application Reference",
+    "Application reference number",
+    "Reference",
+  ],
+
+  businessName: [
+    "Business Name",
+    "Business name",
+  ],
+>>>>>>> 3d20c58728e65b6f6db38c2b4c4a6af2ecc31be8
 
   bizType: ["Business type", "Biz Type", "Type of Business"],
   bizTypeOther: [ "Other Business Type", "Business Type - Other", "Business type — if other"],
@@ -93,7 +108,12 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "I Agree",
     "Agree",
     "Declaration",
+<<<<<<< HEAD
     "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited."
+=======
+    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited",
+    "I confirm that the information provided is accurate and may be verified by Sassy Cosmetic & Beauty Products (K) Limited.",
+>>>>>>> 3d20c58728e65b6f6db38c2b4c4a6af2ecc31be8
   ],
 
   sigName: [
@@ -108,6 +128,7 @@ const FIELD_LABELS: Record<GoogleFormFieldName,  string[]> = {
     "Signature Designation",
     "Signatory Designation",
     "Designation",
+    "Designation ",
   ],
 
   salesPersonId: [

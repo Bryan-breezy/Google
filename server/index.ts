@@ -118,7 +118,23 @@ app.post(
         })
       }
 
+      /**
+       * Generate the application reference before submission so it is also
+       * written to the linked Google Sheet through the Reference Number field.
+       */
+      const cleanBusinessName = (values.businessName || "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase()
+      const cleanKraPin = (values.kraPin || "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase()
+      const cleanMobile = (values.phone || "")
+        .replace(/\D/g, "")
+      const reference =
+        `SASSY-${new Date().getFullYear()}-${cleanKraPin}-${cleanBusinessName}-${cleanMobile}`
+
       const formData: Record< string, string | string[]> = {
+        referenceNumber: reference,
         businessName: values.businessName || "",
         kraPin: values.kraPin || "",
         physicalAddress: values.physicalAddress || "",
@@ -186,6 +202,7 @@ app.post(
         })
       }
 
+<<<<<<< HEAD
       /**
        * Generate application reference.
        */
@@ -202,6 +219,12 @@ app.post(
     const reference = `SASSY-${new Date().getFullYear()}-${cleanKraPin}-${cleanBusinessName}-${cleanMobile}`
 
       return res.json({ success: true, reference,})
+=======
+      return res.json({
+        success: true,
+        reference,
+      })
+>>>>>>> 3d20c58728e65b6f6db38c2b4c4a6af2ecc31be8
     } catch (error) {
       console.error(
         "Google Forms submission failed:",
