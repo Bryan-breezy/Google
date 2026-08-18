@@ -274,32 +274,9 @@ export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
   const fbzxMatch = html.match(/name="fbzx"\s+value="([^"]*)"/)
   const fbzx = fbzxMatch ? fbzxMatch[1] : undefined
 
-  // Count page breaks to build pageHistory
-  const match = html.match(/var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s)
-  let pageCount = 1
-  if (match) {
-    try {
-      const data = JSON.parse(match[1])
-      let tempCount = 0
-      const walk = (value: unknown): void => {
-        if (!Array.isArray(value)) return
-        if (
-          value.length > 3 &&
-          typeof value[0] === "number" &&
-          typeof value[1] === "string" &&
-          value[3] === 8
-        ) {
-          tempCount++
-        }
-        value.forEach(walk)
-      }
-      walk(data)
-      pageCount = tempCount || 1
-    } catch {
-      // ignore
-    }
-  }
-  const pageHistory = Array.from({ length: pageCount }, (_, i) => i).join(",")
+  // Google Forms expects the initial page marker even when the form has multiple pages.
+  // Sending a synthetic list of page indexes causes later-page answers to be dropped.
+  const pageHistory = "0"
 
   cachedConfig = { responseUrl, entries, fbzx, pageHistory }
 
