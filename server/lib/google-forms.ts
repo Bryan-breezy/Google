@@ -274,9 +274,26 @@ export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
   const fbzxMatch = html.match(/name="fbzx"\s+value="([^"]*)"/)
   const fbzx = fbzxMatch ? fbzxMatch[1] : undefined
 
-  // Google Forms expects the initial page marker even when the form has multiple pages.
-  // Sending a synthetic list of page indexes causes later-page answers to be dropped.
-  const pageHistory = "0"
+  // Google Forms expects one page marker for each form page.
+  // Include the final page so agreement and signatory answers are not dropped.
+  const match = html.match(/var FB_PUBLIC_LOAD_DATA_ = (.*?);<\/script>/s)
+  let pageBreakCount = 0
+  if (match) {
+    try {
+      const data = JSON.parse(match[1])
+      const walk = (value: unknown): void => {
+        if (!Array.isArray(value)) return
+        if (value.length > 3 && typeof value[3] === "number" && value[3] === 8) {
+          pageBreakCount += 1
+        }
+        value.forEach(walk)
+      }
+      walk(data)
+    } catch {
+      // Keep the default single-page history when the form metadata cannot be parsed.
+    }
+  }
+  const pageHistory = Array.from({ length: pageBreakCount + 1 }, (_, index) => index).join(",")
 
   cachedConfig = { responseUrl, entries, fbzx, pageHistory }
 
