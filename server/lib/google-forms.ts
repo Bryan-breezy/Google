@@ -51,7 +51,6 @@ const FIELD_LABELS: Record<GoogleFormFieldName, string[]> = {
     "Reference Number",
     "Application Reference",
     "Application reference number",
-    "Reference",
   ],
 
   businessName: ["Business Name", "Business name"],
@@ -198,6 +197,17 @@ function extractEntryIds(html: string): string[] {
   return Array.from(new Set(matches))
 }
 
+const REQUIRED_FORM_FIELDS: GoogleFormFieldName[] = [
+  "referenceNumber",
+  "businessName",
+  "phone",
+  "email",
+  "agreeCheck",
+  "sigName",
+  "sigDesignation",
+  "salesPersonId",
+]
+
 function findEntryId(html: string, fieldName: GoogleFormFieldName): string | undefined {
   const labels = FIELD_LABELS[fieldName].map(normalizeText)
   const metadata = extractQuestionMetadata(html)
@@ -294,8 +304,16 @@ export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
   return cachedConfig
 }
 
-export async function submitToGoogleForm(data: Partial< Record< GoogleFormFieldName, string | string[] >>) {
+export async function submitToGoogleForm(data: Partial<Record<GoogleFormFieldName, string | string[]>>) {
   const config = await getGoogleFormConfig()
+  const missingRequiredFields = REQUIRED_FORM_FIELDS.filter(
+    (fieldName) => !config.entries[fieldName]
+  )
+
+  if (missingRequiredFields.length > 0) {
+    console.error("Google Form is missing required fields:", missingRequiredFields)
+    return { success: false, status: 422, missingRequiredFields }
+  }
 
   const payload = new URLSearchParams()
   for ( const [fieldName, value] of Object.entries(data) ) {

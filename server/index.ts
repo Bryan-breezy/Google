@@ -197,6 +197,13 @@ app.post(
       const result = await submitToGoogleForm(formData)
 
       if (!result.success) {
+        if (result.status === 422 && "missingRequiredFields" in result) {
+          return res.status(503).json({
+            error: "Google Form configuration is incomplete.",
+            missingFields: result.missingRequiredFields,
+          })
+        }
+
         return res.status(502).json({
           error: "Google Forms rejected the submission.",
         })
