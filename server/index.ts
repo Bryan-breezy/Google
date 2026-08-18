@@ -234,6 +234,10 @@ app.get("*", (_req: Request, res: Response) => {
 
 const PORT = process.env.PORT || 8787
 
-app.listen(PORT, () => {
-  console.log(`Registration API server running on http://localhost:${PORT}`)
-})
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Registration API server running on http://localhost:${PORT}`)
+  })
+}
+
+export default app
