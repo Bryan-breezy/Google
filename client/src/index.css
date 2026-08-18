@@ -43,6 +43,7 @@ a { color:inherit; }
   box-shadow: 0 1px 0 var(--line);
 }
 .brand-lockup { display:flex; align-items:center; gap:13px; }
+.brand-mark { display:grid; place-items:center; width:52px; height:52px; border:2px solid var(--green); border-radius:50%; color:var(--green); background:var(--card); font:600 30px/1 'Fraunces',serif; }
 .brand-lockup img { width:52px; height:52px; object-fit:contain; }
 .brand-name { font:600 31px/1 'Fraunces',serif; color:var(--green); letter-spacing:-.04em; }
 .brand-tag { margin-top:5px; color:var(--brass); font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.15em; text-transform:uppercase; }

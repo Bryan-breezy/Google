@@ -1,5 +1,3 @@
-import logo from '../assets/logo.webp'
-
 export default function Header() {
   return (
     <header
@@ -7,7 +5,7 @@ export default function Header() {
       style={{ position: "sticky", top: 0, zIndex: 50 }}
     >
       <div className="brand-lockup">
-        <img src={logo} alt="" />
+        <div className="brand-mark" aria-hidden="true">S</div>
         <div>
           <div className="brand-name">Sassy</div>
           <div className="brand-tag">For a sassy look</div>

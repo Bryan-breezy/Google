@@ -248,7 +248,13 @@ export async function getGoogleFormConfig(): Promise<GoogleFormConfig> {
     
   const now = Date.now()
 
-  if (cachedConfig && now - cacheTime < CACHE_DURATION) return cachedConfig
+  const cacheHasRequiredFields = cachedConfig
+    ? REQUIRED_FORM_FIELDS.every((fieldName) => cachedConfig?.entries[fieldName])
+    : false
+
+  if (cachedConfig && cacheHasRequiredFields && now - cacheTime < CACHE_DURATION) {
+    return cachedConfig
+  }
 
   const html = await fetchGoogleForm(formUrl)
 
