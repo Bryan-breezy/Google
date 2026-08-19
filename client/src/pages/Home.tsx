@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from "react"
-import { Check, ChevronDown, ChevronUp, CircleHelp, Leaf, Loader2, Send } from "lucide-react"
+import { Check, ChevronDown, ChevronUp, CircleHelp, Loader2, Send } from "lucide-react"
 import { toast } from "sonner"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
@@ -66,7 +66,6 @@ function Section(
           <span className="card-eyebrow">{eyebrow ?? "Registration ledger"}</span>
           <h2>{title}</h2>
         </div>
-        <Leaf className="section-leaf" size={15} aria-hidden="true" />
       </header>
       <div className="card-body">{children}</div>
     </section>
