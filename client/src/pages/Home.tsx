@@ -309,7 +309,7 @@ export default function Home() {
                 <span>01</span>
                 <div>
                   <strong>Send your documents</strong>
-                  <p>Email the supporting documents you selected to <a href="mailto:sassycosmetics17.gmail.com">accounts@sassycosmetics.co.ke</a>.</p>
+                  <p>Email the supporting documents you selected to <a href="mailto:sassycosmetics17@gmail.com">sassycosmetics17@gmail.com</a>.</p>
                 </div>
               </li>
               <li>
