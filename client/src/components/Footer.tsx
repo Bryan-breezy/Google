@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="site-footer">
       <span>Sassy Cosmetic & Beauty Products (K) Limited</span>
       <span>Customer registration desk &nbsp;·&nbsp; Nairobi, Kenya</span>
-      <a href="mailto:sassycosmetics17.co.ke">
+      <a href="mailto:sassycosmetics17@gmail.com">
         Contact accounts <ExternalLink size={13} />
       </a>
     </footer>
