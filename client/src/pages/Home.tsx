@@ -172,7 +172,7 @@ export default function Home() {
     Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-2" && value.trim()) && !sectionHasErrors("section-2")),
     Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-3" && value.trim()) && !sectionHasErrors("section-3")),
     Boolean(values.bankName?.trim() || values.bankBranch?.trim() || values.acctName?.trim() || values.acctNo?.trim() || values.paymentTerms),
-    Boolean(values.documents?.trim() && !sectionHasErrors("section-5")),
+    true,
     Boolean(values.agreeCheck === "yes" && values.sigName?.trim() && values.salesPersonId?.trim() && !sectionHasErrors("section-6")),
   ]
   const completedSectionCount = sectionCompletion.filter(Boolean).length
@@ -210,10 +210,6 @@ export default function Home() {
       nextErrors.kraPin = "Enter a valid KRA PIN."
     }
     
-    if (!values.documents?.trim()) {
-      nextErrors.documents = "Please list the supporting documents you will provide."
-    }
-
     if (!values.agreeCheck) nextErrors.agreeCheck = "Please confirm the agreement before submitting."
     if (!values.sigName?.trim()) nextErrors.sigName = "Authorized signatory name is required."
     if (!values.salesPersonId?.trim()) nextErrors.salesPersonId = "Salesperson-in-charge ID is required for validation."
@@ -467,20 +463,6 @@ export default function Home() {
                 <li>KRA PIN Certificate</li>
                 <li>Certificate of Incorporation <small>(if applicable)</small></li>
               </ul>
-              <label className={`field ${errors.documents ? "field-error" : ""}`} id="documents">
-                <span className="field-label">Confirm the documents you will provide<b aria-hidden="true">*</b></span>
-                <textarea
-                  name="documents"
-                  rows={3}
-                  value={values.documents ?? ""}
-                  placeholder="List the documents you will provide"
-                  onChange={(event) => update("documents", event.target.value)}
-                  onBlur={() => markFieldTouched("documents")}
-                  aria-invalid={Boolean(errors.documents)}
-                  aria-describedby={errors.documents ? "documents-error" : undefined}
-                />
-                {errors.documents && <span className="error-text" id="documents-error" role="alert">{errors.documents}</span>}
-              </label>
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
 

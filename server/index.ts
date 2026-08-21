@@ -66,7 +66,6 @@ app.post(
           values.phone?.trim() &&
           values.email?.trim() &&
           EMAIL_PATTERN.test(values.email.trim()) &&
-          values.documents?.trim() &&
           values.agreeCheck === "yes" &&
           values.sigName?.trim() &&
           values.salesPersonId?.trim()
@@ -92,12 +91,6 @@ app.post(
             error: `Invalid email address in ${fieldName}.`,
           })
         }
-      }
-
-      if (!values.documents?.trim()) {
-        return res.status(400).json({
-          error: "Please list the supporting documents you will provide.",
-        })
       }
 
       /**
@@ -151,7 +144,7 @@ app.post(
         acctName: values.acctName || "",
         acctNo: values.acctNo || "",
         paymentTerms: values.paymentTerms || "",
-        documents: values.documents.trim(),
+        documents: "Copy of ID / Passport; Business Permit / Trade License; KRA PIN Certificate; Certificate of Incorporation (if applicable)",
         agreeCheck:
           values.agreeCheck === "yes"
             ? "Yes, I confirm"
