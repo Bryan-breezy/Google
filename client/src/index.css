@@ -231,7 +231,9 @@ form { display:flex; flex-direction:column; gap:28px; }
 .reference-row { padding:11px 0 0; }
 .reference-row strong { color:var(--green-2); font:600 11px 'IBM Plex Mono',monospace; }
 .reference-row input { min-height:39px; padding:8px 10px; font-size:12px; }
-.document-list { display:flex; flex-direction:column; gap:9px; margin:18px 0; }
+.document-list { margin:18px 0; padding:14px 18px 14px 34px; color:#5e6459; background:var(--green-wash); border:1px solid var(--line); font-size:13px; }
+.document-list li { padding:5px 0; }
+.document-list small { color:var(--muted); }
 .document-item { 
   display:flex; 
   align-items:center; 

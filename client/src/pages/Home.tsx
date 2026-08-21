@@ -460,14 +460,20 @@ export default function Home() {
 
             {/* Documents */}
             <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next" hasError={sectionHasErrors("section-5")}>
-              <p className="section-copy">List the supporting documents you’ll email separately after submitting this application.</p>
+              <p className="section-copy">These are the supporting documents to email separately after submitting this application:</p>
+              <ul className="document-list" aria-label="Supporting documents required">
+                <li>Copy of ID / Passport</li>
+                <li>Business Permit / Trade License</li>
+                <li>KRA PIN Certificate</li>
+                <li>Certificate of Incorporation <small>(if applicable)</small></li>
+              </ul>
               <label className={`field ${errors.documents ? "field-error" : ""}`} id="documents">
-                <span className="field-label">Documents you will provide<b aria-hidden="true">*</b></span>
+                <span className="field-label">Confirm the documents you will provide<b aria-hidden="true">*</b></span>
                 <textarea
                   name="documents"
-                  rows={5}
+                  rows={3}
                   value={values.documents ?? ""}
-                  placeholder="For example: KRA PIN Certificate, Business Permit, Director / owner ID"
+                  placeholder="List the documents you will provide"
                   onChange={(event) => update("documents", event.target.value)}
                   onBlur={() => markFieldTouched("documents")}
                   aria-invalid={Boolean(errors.documents)}
