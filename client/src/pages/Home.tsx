@@ -93,7 +93,6 @@ function ChoiceGroup(
 
 export default function Home() {
   const [values, setValues] = useState<Record<string, string>>({})
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([])
   const [otherBusiness, setOtherBusiness] = useState(false)
   const [agreementOpen, setAgreementOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -113,10 +112,9 @@ export default function Home() {
     try {
       const savedDraft = window.localStorage.getItem(DRAFT_STORAGE_KEY)
       if (savedDraft) {
-        const draft = JSON.parse(savedDraft) as { values?: Record<string, string>; selectedDocs?: string[]; otherBusiness?: boolean }
+        const draft = JSON.parse(savedDraft) as { values?: Record<string, string>; otherBusiness?: boolean }
 
         setValues(draft.values ?? {})
-        setSelectedDocs(draft.selectedDocs ?? [])
         setOtherBusiness(Boolean(draft.otherBusiness))
         setDraftRestored(true)
       }
@@ -127,15 +125,15 @@ export default function Home() {
     }
   }, [])
 
-  // Save draft to localStorage whenever values or selectedDocs change
+  // Save draft to localStorage whenever form values change
   useEffect(() => {
     if (!draftReady || submitted) return
     window.localStorage.setItem(
       DRAFT_STORAGE_KEY, 
-      JSON.stringify({ values, selectedDocs, otherBusiness, savedAt: new Date().toISOString() })
+      JSON.stringify({ values, otherBusiness, savedAt: new Date().toISOString() })
     )
     setDraftSavedAt(new Date())
-  }, [draftReady, submitted, values, selectedDocs, otherBusiness])
+  }, [draftReady, submitted, values, otherBusiness])
 
   // Check if Google Forms is configured
   useEffect(() => {
@@ -166,19 +164,6 @@ export default function Home() {
     setErrors((current) => ({ ...current, [name]: validateField(name, values[name] ?? "") }))
   }
 
-  const toggleDoc = (doc: string) => {
-    setSelectedDocs((current) => {
-      const updated = current.includes(doc) ? current.filter((item) => item !== doc) : [...current, doc]
-      // Clear document selection errors once changed
-      setErrors((errs) => {
-        const next = { ...errs }
-        delete next.documents
-        return next
-      })
-      return updated
-    })
-  }
-
   // Determine which sections have errors and how many sections are complete
   const visibleErrors = Object.entries(errors).filter(([, message]) => Boolean(message))
   const sectionHasErrors = (sectionId: string) => visibleErrors.some(([fieldName]) => sectionIdForField(fieldName) === sectionId)
@@ -187,7 +172,7 @@ export default function Home() {
     Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-2" && value.trim()) && !sectionHasErrors("section-2")),
     Boolean(Object.entries(values).some(([name, value]) => sectionIdForField(name) === "section-3" && value.trim()) && !sectionHasErrors("section-3")),
     Boolean(values.bankName?.trim() || values.bankBranch?.trim() || values.acctName?.trim() || values.acctNo?.trim() || values.paymentTerms),
-    selectedDocs.length > 0,
+    Boolean(values.documents?.trim() && !sectionHasErrors("section-5")),
     Boolean(values.agreeCheck === "yes" && values.sigName?.trim() && values.salesPersonId?.trim() && !sectionHasErrors("section-6")),
   ]
   const completedSectionCount = sectionCompletion.filter(Boolean).length
@@ -225,13 +210,8 @@ export default function Home() {
       nextErrors.kraPin = "Enter a valid KRA PIN."
     }
     
-    // Document match validations
-    if (values.kraPin?.trim() && !selectedDocs.includes("kra")) {
-      nextErrors.documents = "Please check 'KRA PIN Certificate' to confirm you will email it."
-    } else if (values.permitNo?.trim() && !selectedDocs.includes("permit")) {
-      nextErrors.documents = "Please check 'Business Permit / Trade License' to confirm you will email it."
-    } else if (values.dirId?.trim() && !selectedDocs.includes("id")) {
-      nextErrors.documents = "Please check 'Copy of ID / Passport' to confirm you will email it."
+    if (!values.documents?.trim()) {
+      nextErrors.documents = "Please list the supporting documents you will provide."
     }
 
     if (!values.agreeCheck) nextErrors.agreeCheck = "Please confirm the agreement before submitting."
@@ -256,7 +236,7 @@ export default function Home() {
       const response = await fetch("/api/submit-registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ values, selectedDocs }),
+        body: JSON.stringify({ values }),
       })
 
       if (!response.ok) {
@@ -480,17 +460,21 @@ export default function Home() {
 
             {/* Documents */}
             <Section id="section-5" number="05" title="Documents" eyebrow="What you’ll send next" hasError={sectionHasErrors("section-5")}>
-              <p className="section-copy">Confirm which supporting documents you’ll email separately after submitting this application.</p>
-              <div className="document-list">
-                {[["id", "Copy of ID / Passport"], ["permit", "Business Permit / Trade License"], ["kra", "KRA PIN Certificate"], ["cert", "Certificate of Incorporation", "if applicable"]].map(([id, label, note]) => (
-                  <label className={`document-item ${selectedDocs.includes(id) ? "selected" : ""}`} key={id}>
-                    <input type="checkbox" checked={selectedDocs.includes(id)} onChange={() => toggleDoc(id)} />
-                    <span>{label} {note && <small>({note})</small>}</span>
-                    <Check size={16} />
-                  </label>
-                ))}
-              </div>
-              {errors.documents && <span className="error-text" style={{ display: "block", marginTop: "0.5rem" }}>{errors.documents}</span>}
+              <p className="section-copy">List the supporting documents you’ll email separately after submitting this application.</p>
+              <label className={`field ${errors.documents ? "field-error" : ""}`} id="documents">
+                <span className="field-label">Documents you will provide<b aria-hidden="true">*</b></span>
+                <textarea
+                  name="documents"
+                  rows={5}
+                  value={values.documents ?? ""}
+                  placeholder="For example: KRA PIN Certificate, Business Permit, Director / owner ID"
+                  onChange={(event) => update("documents", event.target.value)}
+                  onBlur={() => markFieldTouched("documents")}
+                  aria-invalid={Boolean(errors.documents)}
+                  aria-describedby={errors.documents ? "documents-error" : undefined}
+                />
+                {errors.documents && <span className="error-text" id="documents-error" role="alert">{errors.documents}</span>}
+              </label>
               <div className="upload-note">Online submission does not accept file attachments. Your confirmation will include instructions for sending documents by email.</div>
             </Section>
 

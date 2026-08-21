@@ -15,19 +15,11 @@ app.use(express.json())
 
 interface SubmitRegistrationBody {
   values?: Record<string, string>
-  selectedDocs?: string[]
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const KRA_PIN_PATTERN = /^[A-Z]\d{9}[A-Z]$/i
 const optionalEmailFields = ["dirEmail", "cpEmail", "financeEmail", "ref1Email", "ref2Email"] as const
-
-const documentLabels: Record<string, string> = {
-  id: "Director / owner ID",
-  permit: "Business permit",
-  kra: "KRA PIN certificate",
-  cert: "Business registration certificate",
-}
 
 async function isConfigured(): Promise<boolean> {
   try {
@@ -67,13 +59,14 @@ app.post(
         })
       }
 
-      const { values = {},selectedDocs = [] } = req.body || {}
+      const { values = {} } = req.body || {}
 
       const requiredOk = Boolean(
         values.businessName?.trim() &&
           values.phone?.trim() &&
           values.email?.trim() &&
           EMAIL_PATTERN.test(values.email.trim()) &&
+          values.documents?.trim() &&
           values.agreeCheck === "yes" &&
           values.sigName?.trim() &&
           values.salesPersonId?.trim()
@@ -101,20 +94,9 @@ app.post(
         }
       }
 
-      // Document match validation
-      if (values.kraPin?.trim() && !selectedDocs.includes("kra")) {
+      if (!values.documents?.trim()) {
         return res.status(400).json({
-          error: "Document match error: You provided a KRA PIN but did not select the KRA PIN Certificate checklist item.",
-        })
-      }
-      if (values.permitNo?.trim() && !selectedDocs.includes("permit")) {
-        return res.status(400).json({
-          error: "Document match error: You provided a Business Permit Number but did not select the Business Permit checklist item.",
-        })
-      }
-      if (values.dirId?.trim() && !selectedDocs.includes("id")) {
-        return res.status(400).json({
-          error: "Document match error: You provided a Director ID/Passport number but did not select the Copy of ID/Passport checklist item.",
+          error: "Please list the supporting documents you will provide.",
         })
       }
 
@@ -169,11 +151,7 @@ app.post(
         acctName: values.acctName || "",
         acctNo: values.acctNo || "",
         paymentTerms: values.paymentTerms || "",
-        documents: selectedDocs.map(
-          (documentId) =>
-            documentLabels[documentId] ??
-            documentId
-        ),
+        documents: values.documents.trim(),
         agreeCheck:
           values.agreeCheck === "yes"
             ? "Yes, I confirm"

@@ -171,7 +171,7 @@ form { display:flex; flex-direction:column; gap:28px; }
 .field { display:flex; flex-direction:column; gap:7px; min-width:0; }
 .field-label { color:var(--muted); font:600 10px 'IBM Plex Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
 .field-label b { margin-left:3px; }
-.field input,.reference-row input { 
+.field input,.field textarea,.reference-row input { 
   width:100%; 
   min-height:43px; 
   padding:10px 12px; 
@@ -181,10 +181,14 @@ form { display:flex; flex-direction:column; gap:28px; }
   border-radius:2px; 
   transition:border-color .18s var(--ease),box-shadow .18s var(--ease),transform .18s var(--ease); 
 }
+.field textarea { min-height:120px; resize:vertical; line-height:1.5; font:inherit; }
+.field textarea::placeholder { color:#a7aa9f; }
+.field textarea:hover { border-color:#aebaa3; }
+.field textarea:focus { border-color:var(--green-2); box-shadow:0 4px 15px rgba(47,90,26,.10); transform:translateY(-1px); outline:none; }
 .field input::placeholder { color:#a7aa9f; }
 .field input:hover,.reference-row input:hover { border-color:#aebaa3; }
 .field input:focus,.reference-row input:focus { border-color:var(--green-2); box-shadow:0 4px 15px rgba(47,90,26,.10); transform:translateY(-1px); outline:none; }
-.field-error input { border-color:var(--error); }
+.field-error input,.field-error textarea { border-color:var(--error); }
 .section-error { border-color:var(--error); box-shadow:0 0 0 2px rgba(174, 71, 55, .08), var(--shadow); }
 .form-error-summary { margin:0 0 18px; padding:14px 16px; color:#7d2d21; background:#fff4f1; border:1px solid #e3b1a8; border-left:4px solid var(--error); font-size:12px; }
 .form-error-summary strong { display:block; margin-bottom:6px; }
@@ -307,7 +311,7 @@ form { display:flex; flex-direction:column; gap:28px; }
 }
 
 /* Botanical Ledger interaction refinement: make validation, waiting, and confirmation states feel explicit, calm, and useful. */
-.field-error input,.field-error input:focus { border-color:var(--error); box-shadow:0 0 0 3px rgba(169,71,59,.09); }
+.field-error input,.field-error input:focus,.field-error textarea,.field-error textarea:focus { border-color:var(--error); box-shadow:0 0 0 3px rgba(169,71,59,.09); }
 .field-error .field-label { color:var(--error); }
 .button.primary:disabled { color:#6f633e; background:#cdbd8d; box-shadow:none; cursor:wait; transform:none; }
 .success-wrap { animation:success-enter .45s var(--ease) both; }
@@ -331,9 +335,9 @@ form { display:flex; flex-direction:column; gap:28px; }
 .brand-lockup::after { content:''; position:absolute; right:-2px; bottom:-5px; width:31px; height:1px; background:var(--brass); opacity:.8; }
 .card-head { position:relative; }
 .section-leaf { margin-left:auto; flex:none; color:var(--brass); opacity:.72; transform:rotate(-18deg); }
-.field input,.reference-row input { background:rgba(255,254,250,.48); border-width:0 0 1px; border-color:#c9cbbf; border-radius:0; padding-left:2px; box-shadow:none; }
-.field input:hover,.reference-row input:hover { border-color:var(--green-2); background:rgba(255,254,250,.76); }
-.field input:focus,.reference-row input:focus { border-color:var(--green-2); border-bottom-width:2px; box-shadow:none; transform:none; background:#fffefa; }
+.field input,.field textarea,.reference-row input { background:rgba(255,254,250,.48); border-width:0 0 1px; border-color:#c9cbbf; border-radius:0; padding-left:2px; box-shadow:none; }
+.field input:hover,.field textarea:hover,.reference-row input:hover { border-color:var(--green-2); background:rgba(255,254,250,.76); }
+.field input:focus,.field textarea:focus,.reference-row input:focus { border-color:var(--green-2); border-bottom-width:2px; box-shadow:none; transform:none; background:#fffefa; }
 .signature-grid .field:first-child input { padding-left:2px; }
 .subsection-title { position:relative; }
 .subsection-title::after { 
