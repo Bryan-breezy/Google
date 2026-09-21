@@ -46,7 +46,7 @@ export interface GoogleFormConfig {
   pageHistory?: string
 }
 
-const FIELD_LABELS: Record<GoogleFormFieldName, string[]> = {
+export const FIELD_LABELS: Record<GoogleFormFieldName, string[]> = {
   referenceNumber: [
     "Reference Number",
     "Application Reference",
@@ -128,7 +128,7 @@ const FIELD_LABELS: Record<GoogleFormFieldName, string[]> = {
   ],
 }
 
-function normalizeText(value: string): string {
+export function normalizeText(value: string): string {
   return value
     .toLowerCase()
     .replace(/&nbsp;/gi, " ")
