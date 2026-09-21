@@ -217,9 +217,11 @@
 
 .adm-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 8px; border-radius: 999px; font: 600 11.5px/1.3 "IBM Plex Sans", sans-serif; }
 .adm-chip i { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
-.adm-chip-pending { color: var(--adm-warn-ink); background: var(--adm-warn-bg); }
+.adm-chip-new { color: #48504a; background: #eceee6; }
+.adm-chip-in-review { color: #1f5a78; background: #e6f1f6; }
+.adm-chip-follow-up { color: var(--adm-warn-ink); background: var(--adm-warn-bg); }
 .adm-chip-approved { color: var(--green); background: var(--green-soft); }
-.adm-chip-rejected { color: #8d372c; background: #fbeeea; }
+.adm-chip-declined { color: #8d372c; background: #fbeeea; }
 
 .adm-stamp {
   flex: none;
@@ -231,9 +233,11 @@
   letter-spacing: 0.01em;
   transform: rotate(-3deg);
 }
-.adm-stamp-pending { color: #a37419; }
+.adm-stamp-new { color: #5f665f; }
+.adm-stamp-in-review { color: #1f5a78; }
+.adm-stamp-follow-up { color: #a37419; }
 .adm-stamp-approved { color: var(--green); }
-.adm-stamp-rejected { color: var(--error); }
+.adm-stamp-declined { color: var(--error); }
 .adm-stamp-fresh { animation: adm-stamp 0.26s var(--ease); }
 @keyframes adm-stamp {
   from { opacity: 0; transform: rotate(-3deg) scale(1.55); }
@@ -268,7 +272,19 @@
 .adm-pdf-bar strong { font-size: 14px; }
 
 .adm-review { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; padding: 18px; background: var(--green-wash); border: 1px solid #e2e9d9; }
-.adm-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.adm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.adm-move select {
+  min-height: 40px;
+  padding: 8px 30px 8px 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid #d8d8ce;
+  border-radius: 2px;
+  font: 500 13px "IBM Plex Sans", sans-serif;
+  cursor: pointer;
+}
+.adm-move select:hover:not(:disabled) { color: var(--green); border-color: var(--green-2); }
+.adm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .adm-sections { margin-top: 10px; }
 .adm-section { margin-top: 26px; }
