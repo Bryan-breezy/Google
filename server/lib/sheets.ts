@@ -46,9 +46,12 @@ interface CellUpdate {
 interface TableBackend {
   read(): Promise<Table>
   write(updates: CellUpdate[]): Promise<void>
+  /** Optional: save the approval PDF to Drive the way the workbook's own automation does. */
+  approvalPdf?(row: number): Promise<{ url: string; name: string }>
 }
 
 const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets"
+const DEFAULT_TAB = "Registrations"
 
 function colToA1(index: number): string {
   let n = index + 1
@@ -85,7 +88,10 @@ function getJwt(): JWT {
   }
 
   if (!email || !key) {
-    throw new AdminApiError(503, "Google Sheets is not connected on the server.")
+    throw new AdminApiError(
+      503,
+      "Google Sheets is not connected on the server. Set GOOGLE_APPS_SCRIPT_URL and GOOGLE_APPS_SCRIPT_TOKEN, or the Google service account variables."
+    )
   }
 
   jwtClient = new JWT({
@@ -133,10 +139,31 @@ function createGoogleBackend(): TableBackend {
       url: `${SHEETS_API}/${sheetId}`,
       params: { fields: "sheets.properties.title" },
     })
-    const title = res.data.sheets?.[0]?.properties?.title
+    const titles = (res.data.sheets ?? []).map((sheet) => sheet.properties?.title ?? "").filter(Boolean)
+    // The review workbook keeps its working rows on a "Registrations" tab; otherwise use the first tab.
+    const title = titles.find((t) => t.toLowerCase() === DEFAULT_TAB.toLowerCase()) ?? titles[0]
     if (!title) throw new AdminApiError(502, "The spreadsheet has no tabs.")
     tabCache = title
     return title
+  }
+
+  /** A brand-new review column can sit just past the sheet's last column, so grow the grid first. */
+  async function ensureColumns(client: JWT, tab: string, needed: number) {
+    const res = await client.request<{
+      sheets?: { properties?: { sheetId?: number; title?: string; gridProperties?: { columnCount?: number } } }[]
+    }>({
+      url: `${SHEETS_API}/${sheetId}`,
+      params: { fields: "sheets.properties(sheetId,title,gridProperties.columnCount)" },
+    })
+    const props = res.data.sheets?.map((s) => s.properties).find((p) => p?.title === tab)
+    const have = props?.gridProperties?.columnCount ?? 0
+    if (!props || props.sheetId === undefined || have >= needed) return
+
+    await client.request({
+      url: `${SHEETS_API}/${sheetId}:batchUpdate`,
+      method: "POST",
+      data: { requests: [{ appendDimension: { sheetId: props.sheetId, dimension: "COLUMNS", length: needed - have } }] },
+    })
   }
 
   return {
@@ -160,6 +187,7 @@ function createGoogleBackend(): TableBackend {
       try {
         const client = getJwt()
         const tab = await resolveTab(client)
+        await ensureColumns(client, tab, Math.max(...updates.map((u) => u.col)) + 1)
         await client.request({
           url: `${SHEETS_API}/${sheetId}/values:batchUpdate`,
           method: "POST",
@@ -175,6 +203,68 @@ function createGoogleBackend(): TableBackend {
       } catch (error) {
         throw explainGoogleError(error)
       }
+    },
+  }
+}
+
+/**
+ * Talks to a small Google Apps Script web app bound to the workbook (see apps-script/AdminDesk.gs).
+ * It needs no Google Cloud project and no billing details.
+ */
+function createAppsScriptBackend(): TableBackend {
+  async function call<T extends object>(payload: Record<string, unknown>): Promise<T> {
+    const url = process.env.GOOGLE_APPS_SCRIPT_URL?.trim() ?? ""
+    let response: Response
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        // text/plain keeps this a "simple" request; Apps Script reads the raw body either way.
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          token: process.env.GOOGLE_APPS_SCRIPT_TOKEN ?? "",
+          tab: process.env.GOOGLE_SHEET_TAB?.trim() || undefined,
+          ...payload,
+        }),
+        redirect: "follow",
+        signal: AbortSignal.timeout(30_000),
+      })
+    } catch (error) {
+      console.error("Apps Script request failed:", error)
+      throw new AdminApiError(502, "Could not reach the Google Apps Script web app. Check GOOGLE_APPS_SCRIPT_URL.")
+    }
+
+    const text = await response.text()
+    let data: { error?: string } & Record<string, unknown>
+    try {
+      data = JSON.parse(text)
+    } catch {
+      throw new AdminApiError(
+        502,
+        "The Apps Script web app did not return data. Deploy it as a web app that runs as you, with access set to Anyone."
+      )
+    }
+
+    if (data.error === "unauthorized") {
+      throw new AdminApiError(502, "The Apps Script rejected the token. Make GOOGLE_APPS_SCRIPT_TOKEN match ADMIN_TOKEN in the script.")
+    }
+    if (data.error) throw new AdminApiError(502, `Apps Script: ${data.error}`)
+    return data as T
+  }
+
+  return {
+    async read() {
+      const { values } = await call<{ values?: unknown[][] }>({ action: "read" })
+      const grid = (values ?? []).map((row) => row.map((value) => String(value ?? "")))
+      return { headers: grid[0] ?? [], rows: grid.slice(1) }
+    },
+    async write(updates) {
+      if (updates.length === 0) return
+      await call({ action: "write", updates })
+    },
+    async approvalPdf(row) {
+      const result = await call<{ url?: string; name?: string }>({ action: "approvalPdf", row })
+      if (!result.url) throw new AdminApiError(502, "The Apps Script did not return a Drive link.")
+      return { url: result.url, name: result.name ?? "" }
     },
   }
 }
@@ -300,14 +390,26 @@ function createDemoBackend(): TableBackend {
 
 let backend: TableBackend | undefined
 
+function usesAppsScript(): boolean {
+  return Boolean(process.env.GOOGLE_APPS_SCRIPT_URL?.trim())
+}
+
 function getBackend(): TableBackend {
   if (backend) return backend
 
   if (process.env.ADMIN_DEMO === "true") {
     backend = createDemoBackend()
+  } else if (usesAppsScript()) {
+    if (!process.env.GOOGLE_APPS_SCRIPT_TOKEN) {
+      throw new AdminApiError(503, "GOOGLE_APPS_SCRIPT_TOKEN is missing on the server.")
+    }
+    backend = createAppsScriptBackend()
   } else {
     if (!process.env.GOOGLE_SHEET_ID?.trim()) {
-      throw new AdminApiError(503, "GOOGLE_SHEET_ID is missing on the server.")
+      throw new AdminApiError(
+        503,
+        "Google Sheets is not connected on the server. Set GOOGLE_APPS_SCRIPT_URL and GOOGLE_APPS_SCRIPT_TOKEN, or GOOGLE_SHEET_ID with a service account."
+      )
     }
     backend = createGoogleBackend()
   }
@@ -320,6 +422,7 @@ export function isDemoMode(): boolean {
 
 export function isSheetsConfigured(): boolean {
   if (isDemoMode()) return true
+  if (usesAppsScript()) return Boolean(process.env.GOOGLE_APPS_SCRIPT_TOKEN)
   const hasId = Boolean(process.env.GOOGLE_SHEET_ID?.trim())
   const hasCreds =
     Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON) ||
@@ -333,19 +436,46 @@ export function isSheetsConfigured(): boolean {
 
 type AdminColumn = "status" | "reviewedBy" | "reviewedAt" | "notes"
 
-// Read at call time so values from .env are always picked up.
-function adminHeaders(): Record<AdminColumn, string> {
+/**
+ * The review columns the Sheet already uses. `create` is the header written if none of the
+ * `match` headers exist yet (only "Reviewed by" is normally missing from the Registrations tab).
+ * Read at call time so values from .env are always picked up.
+ */
+function adminColumns(): Record<AdminColumn, { create: string; match: string[] }> {
+  const status = process.env.SHEET_STATUS_HEADER?.trim() || "Review status"
   return {
-    status: process.env.SHEET_STATUS_HEADER?.trim() || "Status",
-    reviewedBy: "Reviewed By",
-    reviewedAt: "Reviewed At",
-    notes: "Review Notes",
+    status: { create: status, match: [status, "Review status", "Status"] },
+    reviewedBy: { create: "Reviewed by", match: ["Reviewed by"] },
+    reviewedAt: { create: "Last updated", match: ["Last updated", "Reviewed at"] },
+    notes: { create: "Review notes", match: ["Review notes"] },
   }
+}
+
+// Headers on the Registrations tab that differ from the form's question titles.
+const EXTRA_LABELS: Record<string, string[]> = {
+  phone: ["Phone"],
+  permitNo: ["Permit no."],
+  dirId: ["Director ID / passport"],
+  bizTypeOther: ["Business type other"],
+  cpName: ["Contact name"],
+  cpPosition: ["Contact position"],
+  cpEmail: ["Contact email"],
+  cpMobile: ["Contact mobile"],
+  ref1Company: ["Referee 1 company"],
+  ref1Contact: ["Referee 1 contact / phone"],
+  ref1Email: ["Referee 1 email"],
+  ref2Company: ["Referee 2 company"],
+  ref2Contact: ["Referee 2 contact / phone"],
+  ref2Email: ["Referee 2 email"],
+  acctNo: ["Account no."],
+  documents: ["Documents expected"],
+  agreeCheck: ["Agreement confirmed"],
+  sigName: ["Authorized signatory"],
 }
 
 const labelToField = new Map<string, string>()
 for (const [field, labels] of Object.entries(FIELD_LABELS)) {
-  for (const label of labels) {
+  for (const label of [...labels, ...(EXTRA_LABELS[field] ?? [])]) {
     const key = normalizeText(label)
     if (!labelToField.has(key)) labelToField.set(key, field)
   }
@@ -363,10 +493,14 @@ interface ColumnMap {
  */
 function buildColumnMap(headers: string[]): ColumnMap {
   const map: ColumnMap = { fields: new Map(), admin: {} }
-  const headerNames = adminHeaders()
-  const adminByHeader = new Map<string, AdminColumn>(
-    (Object.keys(headerNames) as AdminColumn[]).map((key) => [normalizeText(headerNames[key]), key])
-  )
+  const adminByHeader = new Map<string, AdminColumn>()
+  const specs = adminColumns()
+  for (const key of Object.keys(specs) as AdminColumn[]) {
+    for (const header of specs[key].match) {
+      const normalized = normalizeText(header)
+      if (!adminByHeader.has(normalized)) adminByHeader.set(normalized, key)
+    }
+  }
 
   headers.forEach((header, index) => {
     const normalized = normalizeText(header)
@@ -389,10 +523,12 @@ function buildColumnMap(headers: string[]): ColumnMap {
 }
 
 function parseStatus(raw: string): ApplicationStatus {
-  const value = raw.trim().toLowerCase()
+  const value = raw.trim().toLowerCase().replace(/[\s_-]+/g, " ")
   if (["approved", "approve", "true", "yes"].includes(value)) return "Approved"
-  if (["rejected", "reject", "declined"].includes(value)) return "Rejected"
-  return "Pending"
+  if (["declined", "decline", "rejected", "reject"].includes(value)) return "Declined"
+  if (["in review", "reviewing", "under review"].includes(value)) return "In review"
+  if (["follow up", "followup", "follow ups"].includes(value)) return "Follow-up"
+  return "New"
 }
 
 function cell(row: string[], index: number | undefined): string {
@@ -458,13 +594,21 @@ function nowStamp(): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone, dateStyle: "short", timeStyle: "short" }).format(new Date())
 }
 
+export interface StatusChangeResult {
+  application: ApplicationDetail
+  /** Set when a copy of the approval PDF was saved to Drive. */
+  driveCopy?: { url: string; name: string }
+  /** Something secondary failed (for example the Drive copy); the status change itself was saved. */
+  warning?: string
+}
+
 export async function setApplicationStatus(input: {
   row: number
   reference: string
   status: ApplicationStatus
   notes: string
   reviewer: string
-}): Promise<ApplicationDetail> {
+}): Promise<StatusChangeResult> {
   const store = getBackend()
   const table = await store.read()
   const row = table.rows[input.row - 2]
@@ -490,7 +634,7 @@ export async function setApplicationStatus(input: {
     const existing = map.admin[key]
     if (existing !== undefined) return existing
     const col = nextCol++
-    updates.push({ row: 1, col, value: adminHeaders()[key] })
+    updates.push({ row: 1, col, value: adminColumns()[key].create })
     return col
   }
 
@@ -500,5 +644,19 @@ export async function setApplicationStatus(input: {
   updates.push({ row: input.row, col: columnFor("notes"), value: input.notes })
 
   await store.write(updates)
-  return getApplication(input.row)
+
+  const result: StatusChangeResult = { application: await getApplication(input.row) }
+
+  // Approving is what the sheet's PDF automation reacts to, but edits made by a script or the API
+  // do not fire onEdit triggers, so ask the connector to run it. Only on the transition to Approved.
+  if (input.status === "Approved" && current.status !== "Approved" && store.approvalPdf) {
+    try {
+      result.driveCopy = await store.approvalPdf(input.row)
+    } catch (error) {
+      const reason = error instanceof AdminApiError ? error.message : "unexpected error"
+      result.warning = `Approved, but the copy for Drive was not created. ${reason}`
+    }
+  }
+
+  return result
 }
