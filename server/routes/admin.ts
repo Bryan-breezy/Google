@@ -120,24 +120,24 @@ router.post(
     const body = (req.body ?? {}) as { status?: unknown; notes?: unknown; reference?: unknown }
 
     if (typeof body.status !== "string" || !APPLICATION_STATUSES.includes(body.status as ApplicationStatus)) {
-      throw new AdminApiError(400, "Choose Approved, Rejected or Pending.")
+      throw new AdminApiError(400, "Choose a valid status.")
     }
     const status = body.status as ApplicationStatus
     const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 2000) : ""
     const reference = typeof body.reference === "string" ? body.reference : ""
 
-    if (status === "Rejected" && !notes) {
-      throw new AdminApiError(400, "Add a short reason before rejecting an application.")
+    if (status === "Declined" && !notes) {
+      throw new AdminApiError(400, "Add a short reason before declining an application.")
     }
 
-    const application = await setApplicationStatus({
+    const result = await setApplicationStatus({
       row,
       reference,
       status,
       notes,
       reviewer: (res.locals.admin as { name: string }).name,
     })
-    res.json({ application })
+    res.json(result)
   })
 )
 
