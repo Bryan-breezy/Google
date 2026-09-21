@@ -1,0 +1,328 @@
+/* Admin desk. Reuses the Botanical Ledger tokens from index.css (--green, --brass, --paper, ...). */
+
+.adm-shell,
+.adm-signin {
+  --adm-warn-bg: #fbf5e7;
+  --adm-warn-ink: #7a5a14;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "IBM Plex Sans", sans-serif;
+}
+
+.adm-muted { color: var(--muted); }
+.adm-small { font-size: 12px; }
+.adm-error { margin: 0; color: var(--error); font-size: 12.5px; }
+
+.adm-spin { animation: adm-spin 0.9s linear infinite; vertical-align: -2px; }
+@keyframes adm-spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------ buttons ------------------------------ */
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font: 600 13px/1 "IBM Plex Sans", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.adm-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.adm-btn-block { width: 100%; margin-top: 6px; }
+.adm-btn-primary { color: #fff; background: var(--green); }
+.adm-btn-primary:hover:not(:disabled) { background: #244714; }
+.adm-btn-brass { color: var(--ink); background: var(--brass); }
+.adm-btn-brass:hover:not(:disabled) { background: #b8842b; }
+.adm-btn-outline { color: var(--green); background: transparent; border-color: #b9c8ad; }
+.adm-btn-outline:hover:not(:disabled) { background: var(--green-soft); border-color: var(--green-2); }
+.adm-btn-danger { color: var(--error); background: transparent; border-color: #dcb0a8; }
+.adm-btn-danger:hover:not(:disabled) { background: #fbeeea; border-color: var(--error); }
+.adm-btn-danger-solid { color: #fff; background: var(--error); }
+.adm-btn-danger-solid:hover:not(:disabled) { background: #923b30; }
+.adm-btn-quiet { color: var(--muted); background: transparent; }
+.adm-btn-quiet:hover:not(:disabled) { color: var(--green); background: var(--green-wash); }
+
+/* ------------------------------ fields ------------------------------ */
+
+.adm-field { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.adm-field > span:first-child { color: var(--muted); font: 500 12px/1.2 "IBM Plex Sans", sans-serif; }
+.adm-field input,
+.adm-field textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #fffefa;
+  border: 1px solid #d8d8ce;
+  border-radius: 2px;
+  font: 400 14px/1.5 "IBM Plex Sans", sans-serif;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.adm-field textarea { resize: vertical; min-height: 84px; }
+.adm-field input::placeholder,
+.adm-field textarea::placeholder { color: #a7aa9f; }
+.adm-field input:hover,
+.adm-field textarea:hover { border-color: #aebaa3; }
+.adm-field input:focus,
+.adm-field textarea:focus { border-color: var(--green-2); box-shadow: 0 4px 15px rgba(47, 90, 26, 0.1); outline: none; }
+.adm-field-error input,
+.adm-field-error textarea { border-color: var(--error); }
+
+.adm-callout {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--adm-warn-ink);
+  background: var(--adm-warn-bg);
+  border-left: 3px solid var(--brass);
+  font-size: 12.5px;
+}
+.adm-callout code { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; }
+
+/* ------------------------------ sign in ------------------------------ */
+
+.adm-signin {
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background: var(--paper);
+}
+.adm-signin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px 30px 32px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--green);
+  box-shadow: var(--shadow);
+}
+.adm-signin-logo { width: 150px; height: auto; margin-bottom: 4px; }
+.adm-signin-card h1 { margin: 0; color: var(--green); font: 600 30px/1.1 "Fraunces", serif; letter-spacing: -0.03em; }
+.adm-signin-card p { margin: 0; font-size: 13.5px; }
+
+/* ------------------------------ header ------------------------------ */
+
+.adm-shell { background: var(--paper); }
+.adm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 28px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 0 var(--brass);
+}
+.adm-brand { display: flex; align-items: center; gap: 14px; }
+.adm-brand img { height: 38px; width: auto; }
+.adm-brand span { padding-left: 14px; color: var(--green); border-left: 1px solid var(--line); font: 600 20px/1 "Fraunces", serif; letter-spacing: -0.02em; }
+.adm-user { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+
+.adm-main { max-width: 1380px; margin: 0 auto; padding: 22px 28px 56px; }
+
+/* ------------------------------ toolbar ------------------------------ */
+
+.adm-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.adm-toolbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+.adm-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 7px 14px;
+  color: #60675b;
+  background: transparent;
+  border: 1px solid #d9ddd3;
+  border-radius: 999px;
+  font: 500 13px/1 "IBM Plex Sans", sans-serif;
+  cursor: pointer;
+  transition: all 0.18s var(--ease);
+}
+.adm-tab b { color: var(--muted); font: 600 12px/1 "IBM Plex Mono", monospace; }
+.adm-tab:hover { color: var(--green); background: var(--green-wash); }
+.adm-tab[aria-pressed="true"] { color: var(--green); background: var(--green-soft); border-color: #9ab28b; }
+.adm-tab[aria-pressed="true"] b { color: var(--green); }
+
+.adm-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 300px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: #fffefa;
+  border: 1px solid #d8d8ce;
+  border-radius: 2px;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.adm-search:focus-within { border-color: var(--green-2); box-shadow: 0 4px 15px rgba(47, 90, 26, 0.1); }
+.adm-search input { flex: 1; min-width: 0; padding: 9px 0; color: var(--ink); background: transparent; border: 0; font: 400 13.5px "IBM Plex Sans", sans-serif; }
+.adm-search input:focus { outline: none; }
+
+/* ------------------------------ layout ------------------------------ */
+
+.adm-body { display: grid; grid-template-columns: minmax(320px, 430px) minmax(0, 1fr); gap: 22px; align-items: start; }
+.adm-list,
+.adm-detail { background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.adm-list { max-height: calc(100vh - 190px); overflow-y: auto; }
+.adm-detail { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+
+.adm-list ul { margin: 0; padding: 0; list-style: none; }
+.adm-list li + li { border-top: 1px solid #ebeae1; }
+.adm-list-state,
+.adm-detail-empty,
+.adm-panel-state { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 30px 24px; font-size: 13.5px; }
+.adm-list-state .adm-btn { margin-top: 8px; }
+.adm-detail-empty { min-height: 260px; justify-content: center; }
+.adm-detail-empty strong { color: var(--green); font: 600 20px/1.2 "Fraunces", serif; }
+.adm-detail-empty span { max-width: 44ch; }
+
+.adm-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 18px 14px 16px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.adm-item:hover { background: var(--green-wash); }
+.adm-item[aria-current="true"] { background: var(--green-soft); border-left-color: var(--green); }
+.adm-item:focus-visible { outline-offset: -3px; }
+.adm-item-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.adm-item-main strong { overflow: hidden; color: var(--ink); font-size: 14.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.adm-item-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-size: 12px; }
+.adm-item-meta span:first-child { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; }
+.adm-item-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.adm-item-side small { color: var(--muted); font-size: 11.5px; }
+
+/* ------------------------------ status ------------------------------ */
+
+.adm-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 8px; border-radius: 999px; font: 600 11.5px/1.3 "IBM Plex Sans", sans-serif; }
+.adm-chip i { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+.adm-chip-pending { color: var(--adm-warn-ink); background: var(--adm-warn-bg); }
+.adm-chip-approved { color: var(--green); background: var(--green-soft); }
+.adm-chip-rejected { color: #8d372c; background: #fbeeea; }
+
+.adm-stamp {
+  flex: none;
+  align-self: flex-start;
+  padding: 4px 12px 5px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  font: 600 16px/1.2 "Fraunces", serif;
+  letter-spacing: 0.01em;
+  transform: rotate(-3deg);
+}
+.adm-stamp-pending { color: #a37419; }
+.adm-stamp-approved { color: var(--green); }
+.adm-stamp-rejected { color: var(--error); }
+.adm-stamp-fresh { animation: adm-stamp 0.26s var(--ease); }
+@keyframes adm-stamp {
+  from { opacity: 0; transform: rotate(-3deg) scale(1.55); }
+  to { opacity: 1; transform: rotate(-3deg) scale(1); }
+}
+
+/* ------------------------------ panel ------------------------------ */
+
+.adm-panel { padding: 20px 26px 30px; }
+.adm-back { display: none; align-items: center; gap: 6px; margin-bottom: 14px; padding: 4px 0; color: var(--green); background: none; border: 0; font: 600 13px "IBM Plex Sans", sans-serif; cursor: pointer; }
+.adm-panel-state .adm-back { display: inline-flex; }
+
+.adm-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.adm-panel-title { min-width: 0; }
+.adm-panel-title h2 { margin: 0; color: var(--green); font: 600 27px/1.1 "Fraunces", serif; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.adm-panel-title p { margin: 6px 0 0; }
+.adm-panel-title .adm-small + .adm-small { margin-top: 2px; }
+.adm-ref { color: var(--muted); font: 500 11.5px/1.4 "IBM Plex Mono", monospace; overflow-wrap: anywhere; }
+
+.adm-pdf-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: #fbf5e7;
+  border: 1px solid #ecd9a6;
+  border-left: 4px solid var(--brass);
+}
+.adm-pdf-bar div { display: flex; flex-direction: column; gap: 2px; }
+.adm-pdf-bar strong { font-size: 14px; }
+
+.adm-review { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; padding: 18px; background: var(--green-wash); border: 1px solid #e2e9d9; }
+.adm-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.adm-sections { margin-top: 10px; }
+.adm-section { margin-top: 26px; }
+.adm-section h3 { margin: 0 0 4px; padding-bottom: 7px; color: var(--green); border-bottom: 1px solid var(--green-2); font: 600 19px/1.2 "Fraunces", serif; letter-spacing: -0.015em; }
+.adm-group h4 { margin: 16px 0 2px; color: var(--muted); font: 600 12.5px/1.3 "IBM Plex Sans", sans-serif; }
+.adm-group dl { margin: 0; }
+.adm-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 14px; padding: 9px 0; border-bottom: 1px solid #ebeae1; }
+.adm-row dt { color: var(--muted); font-size: 12.5px; }
+.adm-row dd { margin: 0; font-size: 14px; overflow-wrap: anywhere; white-space: pre-line; }
+.adm-row dd.adm-empty { color: #a7aa9f; }
+
+/* ------------------------------ dialog ------------------------------ */
+
+.adm-dialog {
+  /* Tailwind's preflight zeroes margins, which would pin the modal to the corner. */
+  margin: auto;
+  width: min(440px, calc(100vw - 32px));
+  padding: 24px 26px 22px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--green);
+  box-shadow: 0 30px 80px rgba(30, 40, 20, 0.28);
+}
+.adm-dialog::backdrop { background: rgba(35, 42, 28, 0.45); }
+.adm-dialog h2 { margin: 0 0 10px; color: var(--green); font: 600 22px/1.15 "Fraunces", serif; letter-spacing: -0.02em; }
+.adm-dialog-body p { margin: 0 0 10px; font-size: 14px; }
+.adm-dialog blockquote { margin: 0; padding: 10px 12px; color: #5b5f55; background: var(--green-wash); border-left: 3px solid var(--brass); font-size: 13px; white-space: pre-line; }
+.adm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+/* ------------------------------ responsive ------------------------------ */
+
+@media (max-width: 960px) {
+  .adm-main { padding: 16px 16px 40px; }
+  .adm-header { padding: 10px 16px; }
+  .adm-body { grid-template-columns: minmax(0, 1fr); }
+  .adm-list { max-height: none; }
+  .adm-detail { position: static; max-height: none; }
+  .adm-body[data-open="true"] .adm-list { display: none; }
+  .adm-body[data-open="false"] .adm-detail { display: none; }
+  .adm-back { display: inline-flex; }
+  .adm-search { width: 100%; }
+  .adm-toolbar-right { width: 100%; }
+  .adm-toolbar-right .adm-btn { flex: none; }
+  .adm-row { grid-template-columns: 1fr; gap: 2px; }
+  .adm-panel { padding: 16px 16px 26px; }
+  .adm-pdf-bar { flex-direction: column; align-items: stretch; }
+  .adm-user span { display: none; }
+  /* With a customer open, the list controls are out of the way until you go back. */
+  .adm-main:has(.adm-body[data-open="true"]) .adm-toolbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-stamp-fresh { animation: none; }
+  .adm-spin { animation-duration: 2.4s; }
+  .adm-btn, .adm-tab, .adm-item { transition: none; }
+}
