@@ -283,7 +283,10 @@ export async function buildApprovalPdf(app: ApplicationDetail): Promise<Uint8Arr
   return doc.save()
 }
 
+/** Same naming as the Sheet's PDF automation: "<reference> - <business name> Summary.pdf". */
 export function approvalPdfFilename(app: ApplicationDetail): string {
-  const base = (app.reference || app.businessName || `row-${app.row}`).replace(/[^A-Za-z0-9._-]+/g, "-")
-  return `Approval-${base}.pdf`
+  const clean = (value: string) => value.replace(/[^A-Za-z0-9._ -]+/g, " ").replace(/\s+/g, " ").trim()
+  const reference = clean(app.reference) || `Row ${app.row}`
+  const business = clean(app.businessName)
+  return `${reference}${business ? ` - ${business}` : ""} Summary.pdf`
 }
