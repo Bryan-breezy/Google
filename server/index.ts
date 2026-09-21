@@ -7,6 +7,7 @@ dotenv.config()
 dotenv.config({ path: path.resolve(process.cwd(), "server/.env") })
 
 import { getGoogleFormConfig, submitToGoogleForm } from "./lib/google-forms"
+import adminRouter from "./routes/admin"
 
 const app = express()
 
@@ -194,6 +195,8 @@ app.post(
     }
   }
 )
+
+app.use("/api/admin", adminRouter)
 
 // In production, serve the Vite build from the same process as the API.
 // In development, Vite serves the client and proxies /api to this server.
