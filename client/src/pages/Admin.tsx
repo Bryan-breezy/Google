@@ -2,8 +2,10 @@ import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState
 import { ArrowLeft, Check, Download, Loader2, LogOut, RefreshCw, RotateCcw, Search, X } from "lucide-react"
 import { toast } from "sonner"
 import {
+  APPLICATION_STATUSES,
   DETAIL_SECTIONS,
   nonEmptyGroups,
+  statusSlug,
   visibleFields,
   type ApplicationDetail,
   type ApplicationStatus,
@@ -53,7 +55,7 @@ function toSummary(app: ApplicationDetail): ApplicationSummary {
 
 function StatusChip({ status }: { status: ApplicationStatus }) {
   return (
-    <span className={`adm-chip adm-chip-${status.toLowerCase()}`}>
+    <span className={`adm-chip adm-chip-${statusSlug(status)}`}>
       <i aria-hidden="true" />
       {status}
     </span>
@@ -213,7 +215,7 @@ function ApplicationPanel(props: {
   const [loadError, setLoadError] = useState("")
   const [notes, setNotes] = useState("")
   const [notesError, setNotesError] = useState("")
-  const [confirm, setConfirm] = useState<"Approved" | "Rejected" | null>(null)
+  const [confirm, setConfirm] = useState<"Approved" | "Declined" | null>(null)
   const [busy, setBusy] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [fresh, setFresh] = useState(false)
@@ -252,7 +254,11 @@ function ApplicationPanel(props: {
     if (!app) return
     setBusy(true)
     try {
-      const { application } = await api<{ application: ApplicationDetail }>(`/applications/${row}/status`, {
+      const { application, driveCopy, warning } = await api<{
+        application: ApplicationDetail
+        driveCopy?: { url: string; name: string }
+        warning?: string
+      }>(`/applications/${row}/status`, {
         method: "POST",
         body: JSON.stringify({ status, notes, reference: app.reference }),
       })
@@ -260,7 +266,15 @@ function ApplicationPanel(props: {
       setApp(application)
       setNotes(application.notes)
       onUpdated(toSummary(application))
-      toast.success(successMessage)
+      if (driveCopy) {
+        toast.success("Approved. A copy was saved to Drive.", {
+          action: { label: "Open", onClick: () => window.open(driveCopy.url, "_blank", "noopener") },
+        })
+      } else if (warning) {
+        toast.warning(warning, { duration: 9000 })
+      } else {
+        toast.success(successMessage)
+      }
       if (becameApproved) {
         setFresh(true)
         window.setTimeout(() => setFresh(false), 1200)
@@ -273,14 +287,14 @@ function ApplicationPanel(props: {
     }
   }
 
-  function askReject() {
+  function askDecline() {
     if (!notes.trim()) {
-      setNotesError("Add a short reason before rejecting.")
+      setNotesError("Add a short reason before declining.")
       notesRef.current?.focus()
       return
     }
     setNotesError("")
-    setConfirm("Rejected")
+    setConfirm("Declined")
   }
 
   async function downloadPdf() {
@@ -356,7 +370,7 @@ function ApplicationPanel(props: {
             </p>
           )}
         </div>
-        <span className={`adm-stamp adm-stamp-${app.status.toLowerCase()} ${fresh ? "adm-stamp-fresh" : ""}`}>
+        <span className={`adm-stamp adm-stamp-${statusSlug(app.status)} ${fresh ? "adm-stamp-fresh" : ""}`}>
           {app.status}
         </span>
       </header>
@@ -401,12 +415,30 @@ function ApplicationPanel(props: {
               <Check size={16} aria-hidden="true" /> Approve
             </button>
           )}
-          {app.status !== "Rejected" && (
-            <button className="adm-btn adm-btn-danger" onClick={askReject} disabled={busy}>
-              <X size={16} aria-hidden="true" /> Reject
+          {app.status !== "Declined" && (
+            <button className="adm-btn adm-btn-danger" onClick={askDecline} disabled={busy}>
+              <X size={16} aria-hidden="true" /> Decline
             </button>
           )}
-          {dirty && app.status !== "Pending" && (
+          <label className="adm-move">
+            <span className="adm-sr">Move to another status</span>
+            <select
+              value=""
+              disabled={busy}
+              onChange={(e) => {
+                const next = e.target.value as ApplicationStatus
+                if (next) changeStatus(next, `Moved to ${next}`)
+              }}
+            >
+              <option value="">Set status…</option>
+              {OTHER_STATUSES.filter((status) => status !== app.status).map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
+          {dirty && (
             <button
               className="adm-btn adm-btn-outline"
               onClick={() => changeStatus(app.status, "Notes saved")}
@@ -414,15 +446,6 @@ function ApplicationPanel(props: {
             >
               {busy && !confirm ? <Loader2 className="adm-spin" size={15} aria-hidden="true" /> : null}
               Save notes
-            </button>
-          )}
-          {app.status !== "Pending" && (
-            <button
-              className="adm-btn adm-btn-quiet"
-              onClick={() => changeStatus("Pending", "Moved back to pending")}
-              disabled={busy}
-            >
-              <RotateCcw size={15} aria-hidden="true" /> Move back to pending
             </button>
           )}
         </div>
@@ -472,15 +495,15 @@ function ApplicationPanel(props: {
       </ConfirmDialog>
 
       <ConfirmDialog
-        open={confirm === "Rejected"}
-        title={`Reject ${app.businessName || "this application"}?`}
-        confirmLabel="Reject"
+        open={confirm === "Declined"}
+        title={`Decline ${app.businessName || "this application"}?`}
+        confirmLabel="Decline"
         tone="reject"
         busy={busy}
-        onConfirm={() => changeStatus("Rejected", "Application rejected")}
+        onConfirm={() => changeStatus("Declined", "Application declined")}
         onCancel={() => setConfirm(null)}
       >
-        <p>The reason below is saved to the sheet. You can move the application back to pending later.</p>
+        <p>The reason below is saved to the sheet. You can change the status again later.</p>
         <blockquote>{notes.trim()}</blockquote>
       </ConfirmDialog>
     </div>
@@ -492,14 +515,16 @@ function ApplicationPanel(props: {
 /* -------------------------------------------------------------------------- */
 
 type Filter = ApplicationStatus | "All"
-const FILTERS: Filter[] = ["Pending", "Approved", "Rejected", "All"]
+const FILTERS: Filter[] = [...APPLICATION_STATUSES, "All"]
+/** Statuses reachable from the "Set status" menu; Approve and Decline have their own buttons. */
+const OTHER_STATUSES: ApplicationStatus[] = ["New", "In review", "Follow-up"]
 
 function Desk({ name, onSignedOut }: { name: string; onSignedOut: (message?: string) => void }) {
   const [applications, setApplications] = useState<ApplicationSummary[] | null>(null)
   const [loadError, setLoadError] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [syncedAt, setSyncedAt] = useState<Date | null>(null)
-  const [filter, setFilter] = useState<Filter>("Pending")
+  const [filter, setFilter] = useState<Filter>("New")
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<number | null>(null)
 
@@ -525,7 +550,7 @@ function Desk({ name, onSignedOut }: { name: string; onSignedOut: (message?: str
   }, [load])
 
   const counts = useMemo(() => {
-    const result: Record<Filter, number> = { Pending: 0, Approved: 0, Rejected: 0, All: 0 }
+    const result = Object.fromEntries([...FILTERS].map((item) => [item, 0])) as Record<Filter, number>
     for (const app of applications ?? []) {
       result[app.status] += 1
       result.All += 1
@@ -622,9 +647,11 @@ function Desk({ name, onSignedOut }: { name: string; onSignedOut: (message?: str
                 <strong>
                   {query
                     ? "No applications match that search."
-                    : filter === "Pending"
-                      ? "Nothing is waiting for review."
-                      : `No ${filter.toLowerCase()} applications yet.`}
+                    : filter === "New"
+                      ? "No new applications."
+                      : filter === "All"
+                        ? "No applications yet."
+                        : `Nothing is marked ${filter} right now.`}
                 </strong>
                 <span className="adm-muted adm-small">
                   {query ? "Try a KRA PIN, phone number or part of the business name." : "New form submissions appear here as soon as they reach the sheet."}
