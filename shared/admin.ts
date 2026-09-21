@@ -1,13 +1,15 @@
-/**
- * Shared types and display helpers for the admin application review UI
- * and the approval PDF generator. Kept in `shared/` so both the client
- * and the server can import the same definitions.
- */
-
-export const APPLICATION_STATUSES = ["Pending", "Approved", "Rejected"] as const
+/** The review workflow used in the Sheet: New → In review → Follow-up / Approved / Declined. */
+export const APPLICATION_STATUSES = ["New", "In review", "Follow-up", "Approved", "Declined"] as const
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number]
 
+/** CSS-friendly slug: "In review" -> "in-review". */
+export function statusSlug(status: ApplicationStatus): string {
+  return status.toLowerCase().replace(/\s+/g, "-")
+}
+
+/** One row of the Google Sheet, trimmed down for the list view. */
 export interface ApplicationSummary {
+  /** 1-based row number in the sheet (row 1 is the header). */
   row: number
   reference: string
   businessName: string
@@ -21,31 +23,33 @@ export interface ApplicationSummary {
 }
 
 export interface ApplicationDetail extends ApplicationSummary {
-  notes: string
-  /** Raw field values keyed by the logical Google Form field name. */
+  /** Every mapped form answer, keyed by the logical field name (businessName, dirEmail, ...). */
   fields: Record<string, string>
+  notes: string
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Detail layout used by the admin drawer and the approval PDF               */
-/* -------------------------------------------------------------------------- */
-
-export interface DetailField {
+export interface FieldDef {
   key: string
   label: string
+  /** Hidden entirely when empty, instead of showing a dash. */
+  optional?: boolean
 }
 
-export interface DetailGroup {
+export interface FieldGroup {
   title?: string
-  fields: DetailField[]
+  fields: FieldDef[]
 }
 
 export interface DetailSection {
   id: string
   title: string
-  groups: DetailGroup[]
+  groups: FieldGroup[]
 }
 
+/**
+ * Mirrors the sections of the public registration form so the admin screen and
+ * the approval PDF read in the same order the customer filled things in.
+ */
 export const DETAIL_SECTIONS: DetailSection[] = [
   {
     id: "customer",
@@ -58,22 +62,22 @@ export const DETAIL_SECTIONS: DetailSection[] = [
           { key: "physicalAddress", label: "Physical address" },
           { key: "phone", label: "Phone / mobile" },
           { key: "email", label: "Email" },
-          { key: "permitNo", label: "Business permit no." },
-          { key: "bizType", label: "Type of business" },
-          { key: "bizTypeOther", label: "Business type (other)" },
+          { key: "permitNo", label: "Business permit number" },
+          { key: "bizType", label: "Business type" },
+          { key: "bizTypeOther", label: "Business type (other)", optional: true },
         ],
       },
     ],
   },
   {
     id: "people",
-    title: "People & contacts",
+    title: "People and contacts",
     groups: [
       {
         title: "Director / owner",
         fields: [
-          { key: "dirName", label: "Name" },
-          { key: "dirId", label: "ID / passport no." },
+          { key: "dirName", label: "Full name" },
+          { key: "dirId", label: "ID or passport" },
           { key: "dirEmail", label: "Email" },
           { key: "dirMobile", label: "Mobile" },
         ],
@@ -81,7 +85,7 @@ export const DETAIL_SECTIONS: DetailSection[] = [
       {
         title: "Primary contact",
         fields: [
-          { key: "cpName", label: "Name" },
+          { key: "cpName", label: "Full name" },
           { key: "cpPosition", label: "Position" },
           { key: "cpEmail", label: "Email" },
           { key: "cpMobile", label: "Mobile" },
@@ -90,7 +94,7 @@ export const DETAIL_SECTIONS: DetailSection[] = [
       {
         title: "Accounts / finance contact",
         fields: [
-          { key: "financeName", label: "Name" },
+          { key: "financeName", label: "Full name" },
           { key: "financePosition", label: "Position" },
           { key: "financeEmail", label: "Email" },
           { key: "financeMobile", label: "Mobile" },
@@ -106,7 +110,7 @@ export const DETAIL_SECTIONS: DetailSection[] = [
         title: "Reference 1",
         fields: [
           { key: "ref1Company", label: "Company" },
-          { key: "ref1Contact", label: "Contact & phone" },
+          { key: "ref1Contact", label: "Contact" },
           { key: "ref1Email", label: "Email" },
         ],
       },
@@ -114,7 +118,7 @@ export const DETAIL_SECTIONS: DetailSection[] = [
         title: "Reference 2",
         fields: [
           { key: "ref2Company", label: "Company" },
-          { key: "ref2Contact", label: "Contact & phone" },
+          { key: "ref2Contact", label: "Contact" },
           { key: "ref2Email", label: "Email" },
         ],
       },
@@ -122,11 +126,11 @@ export const DETAIL_SECTIONS: DetailSection[] = [
   },
   {
     id: "banking",
-    title: "Banking & terms",
+    title: "Banking and terms",
     groups: [
       {
         fields: [
-          { key: "bankName", label: "Bank name" },
+          { key: "bankName", label: "Bank" },
           { key: "bankBranch", label: "Branch" },
           { key: "acctName", label: "Account name" },
           { key: "acctNo", label: "Account number" },
@@ -138,43 +142,30 @@ export const DETAIL_SECTIONS: DetailSection[] = [
   {
     id: "documents",
     title: "Documents",
-    groups: [
-      {
-        fields: [{ key: "documents", label: "Documents available" }],
-      },
-    ],
+    groups: [{ fields: [{ key: "documents", label: "Documents listed" }] }],
   },
   {
     id: "agreement",
-    title: "Agreement & signatory",
+    title: "Agreement",
     groups: [
       {
         fields: [
           { key: "agreeCheck", label: "Declaration" },
-          { key: "sigName", label: "Authorised signatory" },
+          { key: "sigName", label: "Signatory" },
           { key: "sigDesignation", label: "Designation" },
-          { key: "salesPersonId", label: "Salesperson-in-charge ID" },
-          { key: "referenceNumber", label: "Application reference" },
+          { key: "salesPersonId", label: "Salesperson in charge" },
         ],
       },
     ],
   },
 ]
 
-/** Return only groups that have at least one non-empty field value. */
-export function nonEmptyGroups(
-  section: DetailSection,
-  fields: Record<string, string>
-): DetailGroup[] {
-  return section.groups.filter((group) =>
-    group.fields.some((field) => (fields[field.key] ?? "").trim() !== "")
-  )
+/** Drop groups where nothing was filled in (e.g. no second trade reference). */
+export function nonEmptyGroups(section: DetailSection, fields: Record<string, string>): FieldGroup[] {
+  return section.groups.filter((group) => group.fields.some((f) => (fields[f.key] ?? "").trim() !== ""))
 }
 
-/** Return only fields that have a non-empty value. */
-export function visibleFields(
-  group: DetailGroup,
-  fields: Record<string, string>
-): DetailField[] {
-  return group.fields.filter((field) => (fields[field.key] ?? "").trim() !== "")
+/** The fields of a group worth showing: everything except optional fields that are blank. */
+export function visibleFields(group: FieldGroup, fields: Record<string, string>): FieldDef[] {
+  return group.fields.filter((f) => !f.optional || (fields[f.key] ?? "").trim() !== "")
 }
