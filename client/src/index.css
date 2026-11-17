@@ -53,9 +53,10 @@ a { color:inherit; }
 }
 
 .brand-lockup img { 
-  width:52px; 
-  height:52px; 
+  width:72px; 
+  height:72px; 
   object-fit:contain; 
+  display:block; 
 }
 .brand-name { font:600 31px/1 'Fraunces',serif; color:var(--green); letter-spacing:-.04em; }
 .brand-tag { margin-top:5px; color:var(--brass); font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.15em; text-transform:uppercase; }
