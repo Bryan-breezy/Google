@@ -8,10 +8,7 @@ export default function Header() {
     >
       <div className="brand-lockup">
         <img src={logo} alt="" />
-        <div>
-          <div className="brand-name">Sassy</div>
-          <div className="brand-tag">For a sassy look</div>
-        </div>
+
       </div>
       <div className="company-meta">
         <strong>Sassy Cosmetic & Beauty Products (K) Limited</strong>
