@@ -1,5 +1,13 @@
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib"
 import type { ApplicationDetail } from "../../shared/admin"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const LOGO_PATH = resolve(__dirname, "../../client/src/assets/logo.png")
 
 const COMPANY = {
   name: "Sassy Cosmetic & Beauty Products (K) Limited",
@@ -134,8 +142,24 @@ class PdfSheet {
   }
 }
 
-function drawHeader(sheet: PdfSheet, app: ApplicationDetail) {
+async function loadLogo(doc: PDFDocument) {
+  try {
+    return await doc.embedPng(readFileSync(LOGO_PATH))
+  } catch {
+    return undefined
+  }
+}
+
+function drawHeader(sheet: PdfSheet, app: ApplicationDetail, logo?: Awaited<ReturnType<PDFDocument["embedPng"]>>) {
   const { fonts } = sheet
+
+  if (logo) {
+    const width = 110
+    const height = 36
+    const x = PAGE_W - MARGIN_X - width
+    const y = sheet.y - height + 2
+    sheet.page.drawImage(logo, { x, y, width, height })
+  }
 
   sheet.text(COMPANY.name, MARGIN_X, sheet.y, 13, fonts.bold, GREEN)
   sheet.y -= 17
@@ -214,7 +238,7 @@ function drawSection(sheet: PdfSheet, title: string, rows: Array<[string, string
   sheet.y -= 16
 }
 
-function drawFooter(sheet: PdfSheet) {
+function drawFooter(sheet: PdfSheet, _app?: ApplicationDetail) {
   const total = sheet.pages.length
 
   sheet.pages.forEach((page, index) => {
@@ -262,8 +286,9 @@ export async function buildApprovalPdf(app: ApplicationDetail): Promise<Uint8Arr
   }
 
   const sheet = new PdfSheet(doc, fonts)
+  const logo = await loadLogo(doc)
 
-  drawHeader(sheet, app)
+  drawHeader(sheet, app, logo)
   drawTitle(sheet)
 
   sheet.text(`Dear ${app.businessName || "Customer"},`, MARGIN_X, sheet.y, 10.5, fonts.regular, INK)
