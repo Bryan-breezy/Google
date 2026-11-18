@@ -1,13 +1,6 @@
-import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib"
+import LOGO_DATA_URL from "../../client/src/assets/logo.png"
 import type { ApplicationDetail } from "../../shared/admin"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const LOGO_PATH = resolve(__dirname, "../../client/src/assets/logo.png")
 
 const COMPANY = {
   name: "Sassy Cosmetic & Beauty Products (K) Limited",
@@ -143,23 +136,22 @@ class PdfSheet {
 }
 
 async function loadLogo(doc: PDFDocument) {
-  try {
-    return await doc.embedPng(readFileSync(LOGO_PATH))
-  } catch {
-    return undefined
-  }
+  const logoBytes = Buffer.from(LOGO_DATA_URL.split(",")[1], "base64")
+  return doc.embedPng(logoBytes)
 }
 
-function drawHeader(sheet: PdfSheet, app: ApplicationDetail, logo?: Awaited<ReturnType<PDFDocument["embedPng"]>>) {
+function drawHeader(
+  sheet: PdfSheet,
+  app: ApplicationDetail,
+  logo: Awaited<ReturnType<PDFDocument["embedPng"]>>,
+) {
   const { fonts } = sheet
 
-  if (logo) {
-    const width = 110
-    const height = 36
-    const x = PAGE_W - MARGIN_X - width
-    const y = sheet.y - height + 2
-    sheet.page.drawImage(logo, { x, y, width, height })
-  }
+  const width = 110
+  const height = 36
+  const x = PAGE_W - MARGIN_X - width
+  const y = sheet.y - height + 2
+  sheet.page.drawImage(logo, { x, y, width, height })
 
   sheet.text(COMPANY.name, MARGIN_X, sheet.y, 13, fonts.bold, GREEN)
   sheet.y -= 17
