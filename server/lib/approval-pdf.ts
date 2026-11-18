@@ -149,15 +149,19 @@ function drawHeader(
 
   const width = 110
   const height = 36
-  const x = PAGE_W - MARGIN_X - width
+  const x = MARGIN_X
   const y = sheet.y - height + 2
   sheet.page.drawImage(logo, { x, y, width, height })
 
-  sheet.text(COMPANY.name, MARGIN_X, sheet.y, 13, fonts.bold, GREEN)
+  const right = PAGE_W - MARGIN_X
+  const nameWidth = fonts.bold.widthOfTextAtSize(COMPANY.name, 13)
+  sheet.text(COMPANY.name, right - nameWidth, sheet.y, 13, fonts.bold, GREEN)
   sheet.y -= 17
-  sheet.text(COMPANY.address, MARGIN_X, sheet.y, 9.5, fonts.regular, INK)
+  const addressWidth = fonts.regular.widthOfTextAtSize(COMPANY.address, 9.5)
+  sheet.text(COMPANY.address, right - addressWidth, sheet.y, 9.5, fonts.regular, INK)
   sheet.y -= 14
-  sheet.text(COMPANY.phones, MARGIN_X, sheet.y, 9.5, fonts.regular, INK)
+  const phonesWidth = fonts.regular.widthOfTextAtSize(COMPANY.phones, 9.5)
+  sheet.text(COMPANY.phones, right - phonesWidth, sheet.y, 9.5, fonts.regular, INK)
   sheet.y -= 18
   sheet.rule(sheet.y, 0.8, GREEN)
   sheet.y -= 24
